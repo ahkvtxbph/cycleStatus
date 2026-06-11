@@ -1,2 +1,7 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<Error><Code>NoSuchBucket</Code><Message>The specified bucket does not exist</Message><BucketName>cycle-app-bucket</BucketName><RequestId>K8BEBXAB85N5HTT0</RequestId><HostId>6+D+jQnEKKG1xEhmCTbfbn4GIt4MsCb1pyigCfUeYjF69OVxvyT4dkS98dCfV7o1Z62k0MNkD0yLDA0+5hvGEPIrdQ9USTNw</HostId></Error>const lastUpdate = '11/06/2026 09:07:10';
+- name: Fetch data
+        run: |
+          # יצירת קובץ ה-JS עם משתנה תקין
+          echo "const cycleData = " > data.js
+          curl -s https://cycle-app-bucket.s3.amazonaws.com/cycledata.js >> data.js
+          echo ";" >> data.js
+          echo "const lastUpdate = '$(date +'%d/%m/%Y %H:%M:%S')';" >> data.js
