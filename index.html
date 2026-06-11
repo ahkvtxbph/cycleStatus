@@ -2,438 +2,72 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מערכת מיקומי מכונות מיחזור - מועצה אזורית שדות נגב</title>
+    <title>מערכת מיקומי מכונות מיחזור</title>
+    <script src="data.js"></script>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
-            margin: 20px;
-            color: #333;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #2c3e50;
-            text-align: center;
-            margin-bottom: 5px;
-        }
-        .subtitle {
-            text-align: center;
-            color: #7f8c8d;
-            margin-bottom: 25px;
-        }
-        .status-bar {
-            text-align: center;
-            font-size: 13px;
-            font-weight: bold;
-            padding: 6px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-        }
-        .status-live { background-color: #d4edda; color: #155724; }
-        .status-backup { background-color: #fff3cd; color: #856404; }
-        
-        .controls {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            gap: 15px;
-            background: #fafbfc;
-            padding: 15px;
-            border-radius: 6px;
-            border: 1px solid #eaeaea;
-        }
-        .search-group {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        input[type="text"], select {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-        input[type="text"] { width: 250px; }
-        select { background-color: white; cursor: pointer; }
-        
-        .counter {
-            font-size: 16px;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        th, td {
-            padding: 12px 15px;
-            text-align: right;
-            border-bottom: 1px solid #ddd;
-            vertical-align: middle;
-        }
-        th {
-            background-color: #34495e;
-            color: white;
-        }
-        tr:hover { background-color: #f5f5f5; }
-        
-        .badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            color: white;
-            font-weight: bold;
-        }
-        .badge-index { background-color: #7f8c8d; }
-        
-        .status-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-weight: bold;
-            font-size: 14px;
-        }
-        .dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-        .dot-available { background-color: #28a745; box-shadow: 0 0 8px #28a745; }
-        .dot-full { background-color: #dc3545; box-shadow: 0 0 8px #dc3545; }
-        .text-available { color: #28a745; }
-        .text-full { color: #dc3545; }
-
-        .type-kashcash {
-            background-color: #0056b3;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-            display: inline-block;
-        }
-        .type-pitkit {
-            background-color: #28a745;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-            display: inline-block;
-        }
-
-        .waze-btn {
-            background-color: #33ccff;
-            color: #2c3e50;
-            padding: 8px 14px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 13px;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .waze-btn:hover { background-color: #00bfff; color: white; }
+        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: right; }
+        .status-badge { font-weight: bold; }
+        .dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-left: 5px; }
+        .bg-green { background-color: #28a745; }
+        .bg-red { background-color: #dc3545; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>רשימת מכונות מיחזור - שדות נגב ופריסה ארצית</h1>
-    <div class="subtitle">חיווי קיבולת בזמן אמת ומצב סטטוס פנוי/מלא</div>
+    <h1>רשימת מכונות מיחזור</h1>
+    <div id="connectionStatus" style="font-weight:bold; margin-bottom: 20px;">טוען נתונים...</div>
     
-    <div id="connectionStatus" class="status-bar status-backup">🔄 מתחבר לשרת הנתונים של Cycle...</div>
-
-    <div class="controls">
-        <div class="search-group">
-            <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="חפש לפי יישוב או כתובת...">
-            
-            <select id="typeFilter" onchange="filterTable()">
-                <option value="all">כל סוגי המכונות</option>
-                <option value="פיתקית">מכונת פיתקית</option>
-                <option value="KASHCASE">מכונת KASHCASE</option>
-            </select>
-
-            <select id="statusFilter" onchange="filterTable()">
-                <option value="all">כל המצבים (פנוי + מלא)</option>
-                <option value="available">🟢 פנויה בלבד</option>
-                <option value="full">🔴 מלאה / מחוץ לפעילות</option>
-            </select>
-        </div>
-        
-        <div id="machineCounter" class="counter">טוען נתונים...</div>
-    </div>
-
     <table id="machinesTable">
         <thead>
             <tr>
                 <th>מספר</th>
                 <th>סוג</th>
-                <th>סטטוס קיבולת</th>
-                <th>מיקום / כתובת מלאה</th>
-                <th>קו רוחב</th>
-                <th>קו אורך</th>
+                <th>סטטוס</th>
+                <th>כתובת</th>
                 <th>ניווט</th>
             </tr>
         </thead>
-        <tbody id="tableBody">
-            </tbody>
+        <tbody id="tableBody"></tbody>
     </table>
 </div>
 
 <script>
-    // מאגר גיבוי ארצי מלא ומעודכן (למקרה שהרשת חוסמת גישה לשרת החיצוני)
-    const backupData = [
-        { "address": "מועצה אזורית שדות נגב - כפר מימון (מרכז מסחרי)", "lat": 31.431401, "lng": 34.537118, "type": "KASHCASE", "status": 0 },
-        { "address": "נתיבות - מתחם גלובוס סנטר, שדרות ירושלים", "lat": 31.4182, "lng": 34.5964, "type": "פיתקית", "status": 0 },
-        { "address": "מועצה אזורית שדות נגב - סעד (מזכירות המזון)", "lat": 31.4702, "lng": 34.5293, "type": "KASHCASE", "status": 0 },
-        { "address": "אופקים - מתחם קניות קינג סטור, דרך הטייסים", "lat": 31.3204, "lng": 34.6215, "type": "KASHCASE", "status": 0 },
-        { "address": "שדרות - סופר ברקת, כיכר הנשיא", "lat": 31.5234, "lng": 34.5948, "type": "פיתקית", "status": 0 },
-        { "address": "שדרות - מתחם מול שדרות, דרך מנחם בגין", "lat": 31.5189, "lng": 34.5872, "type": "KASHCASE", "status": 0 },
-        { "address": "באר שבע - מתחם ביג, דרך חברון", "lat": 31.2384, "lng": 34.8015, "type": "פיתקית", "status": 0 },
-        { "address": "באר שבע - גראנד קניון, שדרות דוד טוביהו", "lat": 31.2512, "lng": 34.7794, "type": "KASHCASE", "status": 0 },
-        { "address": "אשקלון - מתחם קוסמוס, שדרות בן גוריון", "lat": 31.6508, "lng": 34.5684, "type": "פיתקית", "status": 0 },
-        { "address": "אשקלון - קניון גירון, שדרות הנשיא", "lat": 31.6672, "lng": 34.5751, "type": "KASHCASE", "status": 0 },
-        { "address": "אשדוד - מתחם סטאר סנטר, ז'בוטינסקי", "lat": 31.8105, "lng": 34.6542, "type": "KASHCASE", "status": 0 },
-        { "address": "אשדוד - קניון סי מול, הגדוד העברי", "lat": 31.7942, "lng": 34.6421, "type": "פיתקית", "status": 0 },
-        { "address": "תל אביב - דיזנגוף סנטר, שדרות דיזנגוף 50", "lat": 32.0754, "lng": 34.7748, "type": "פיתקית", "status": 0 },
-        { "address": "תל אביב - שופרסל דיל, יגאל אלון 82", "lat": 32.0689, "lng": 34.7925, "type": "KASHCASE", "status": 0 },
-        { "address": "רמת גן - קניון איילון, דרך אבא הלל", "lat": 32.0997, "lng": 34.8264, "type": "KASHCASE", "status": 0 },
-        { "address": "גבעתיים - קניון גבעתיים, דרך יצחק רבין", "lat": 32.0658, "lng": 34.8112, "type": "פיתקית", "status": 0 },
-        { "address": "ראשון לציון - מתחם חצי חינם, משה דיין", "lat": 31.9845, "lng": 34.7612, "type": "KASHCASE", "status": 0 },
-        { "address": "ראשון לציון - קניון הזהב, דוד סחרוב", "lat": 31.9912, "lng": 34.7745, "type": "פיתקית", "status": 0 },
-        { "address": "חולון - מתחם עזריאלי חולון, הרוקמים", "lat": 32.0148, "lng": 34.8019, "type": "KASHCASE", "status": 0 },
-        { "address": "פתח תקווה - קניון הגבעה, שדרות העצמאות", "lat": 32.0742, "lng": 34.8621, "type": "פיתקית", "status": 0 },
-        { "address": "פתח תקווה - מתחם יכין סנטר, השחם", "lat": 32.0924, "lng": 34.8654, "type": "KASHCASE", "status": 0 },
-        { "address": "נס ציונה - מתחם ישפרו סנטר, הפטיש", "lat": 31.9145, "lng": 34.7984, "type": "KASHCASE", "status": 0 },
-        { "address": "בית שמש - קניון ביג פאשן, יגאל אלון", "lat": 31.7412, "lng": 34.9874, "type": "KASHCASE", "status": 0 },
-        { "address": "ירושלים - קניון מלחה, דרך אגודת ספורט ביתר", "lat": 31.7514, "lng": 35.1872, "type": "KASHCASE", "status": 0 },
-        { "address": "ירושלים - תחנה מרכזית, שדרות שז''ר", "lat": 31.7891, "lng": 35.2031, "type": "פיתקית", "status": 0 },
-        { "address": "חיפה - גרנד קניון, דרך שמחה גולן", "lat": 32.7884, "lng": 35.0065, "type": "KASHCASE", "status": 0 },
-        { "address": "חיפה - חוצות המפרץ, דרך יפו", "lat": 32.8124, "lng": 35.0412, "type": "פיתקית", "status": 0 },
-        { "address": "נתניה - קניון עיר ימים, בני ברמן", "lat": 32.2854, "lng": 34.8415, "type": "פיתקית", "status": 0 },
-        { "address": "נתניה - מתחם רוגובין, הגביש", "lat": 32.2791, "lng": 34.8624, "type": "KASHCASE", "status": 0 },
-        { "address": "כפר סבא - קניון G, ויצמן", "lat": 32.1754, "lng": 34.9215, "type": "KASHCASE", "status": 0 },
-        { "address": "רעננה - קניון רננים, המלאכה", "lat": 32.1984, "lng": 34.8872, "type": "פיתקית", "status": 0 },
-        { "address": "הרצליה - שבעת הכוכבים, שדרות שבעת הכוכבים", "lat": 32.1648, "lng": 34.8214, "type": "KASHCASE", "status": 0 },
-        { "address": "מודיעין - קניון עזריאלי מודיעין, לב העיר", "lat": 31.9012, "lng": 35.0045, "type": "פיתקית", "status": 0 },
-        { "address": "רחובות - קניון רחובות, ביל''ו", "lat": 31.8942, "lng": 34.8105, "type": "KASHCASE", "status": 0 },
-        { "address": "קריית גת - קניון לב העיר, העצמאות", "lat": 31.6054, "lng": 34.7712, "type": "פיתקית", "status": 0 },
-        { "address": "אילת - קניון מול הים, הפלמ''ח", "lat": 29.5512, "lng": 34.9542, "type": "KASHCASE", "status": 0 },
-        { "address": "חדרה - קניון מול החוף, דרך השלום", "lat": 32.4354, "lng": 34.8974, "type": "KASHCASE", "status": 0 },
-        { "address": "קיסריה - מתחם תחנת הרכבת", "lat": 32.5012, "lng": 34.9215, "type": "פיתקית", "status": 0 },
-        { "address": "זכרון יעקב - מתחם מול זכרון", "lat": 32.5642, "lng": 34.9314, "type": "KASHCASE", "status": 0 },
-        { "address": "טבריה - מתחם ביג, יהודה הלוי", "lat": 32.7915, "lng": 35.5214, "type": "פיתקית", "status": 0 },
-        { "address": "עפולה - מתחם עמק סנטר, שדרות יצחק רבין", "lat": 32.6105, "lng": 35.2942, "type": "KASHCASE", "status": 0 },
-        { "address": "נצרת - מתחם ביג אופנה, תאופיק זיאד", "lat": 32.6942, "lng": 35.2915, "type": "KASHCASE", "status": 0 },
-        { "address": "כרמיאל - מתחם קניון חוצות כרמיאל", "lat": 32.9145, "lng": 35.2984, "type": "פיתקית", "status": 0 },
-        { "address": "נהריה - קניון ארנה, שדרות הגעתון", "lat": 33.0042, "lng": 35.1015, "type": "KASHCASE", "status": 0 },
-        { "address": "עכו - קניון עזריאלי עכו, שלום הגליל", "lat": 32.9254, "lng": 35.0842, "type": "פיתקית", "status": 0 },
-        { "address": "קרית שמונה - מתחם ביג, שדרות תל חי", "lat": 33.2097, "lng": 35.5714, "type": "KASHCASE", "status": 0 },
-        { "address": "רמת השרון - סוקולוב 45", "lat": 32.1384, "lng": 34.8412, "type": "פיתקית", "status": 0 },
-        { "address": "הוד השרון - קניון מרגלית, ז'בוטינסקי", "lat": 32.1512, "lng": 34.8915, "type": "KASHCASE", "status": 0 },
-        { "address": "גבעת שמואל - מתחם רוגובין, הנשיא", "lat": 32.0794, "lng": 34.8484, "type": "KASHCASE", "status": 0 },
-        { "address": "קריית אונו - קניון קריית אונו, שלמה המלך", "lat": 32.0624, "lng": 34.8572, "type": "פיתקית", "status": 0 },
-        { "address": "יהוד - מתחם ביג פאשן, מוהליבר", "lat": 32.0314, "lng": 34.8912, "type": "KASHCASE", "status": 0 },
-        { "address": "ראש העין - מתחם שפיר סנטר, בן גוריון", "lat": 32.0945, "lng": 34.9542, "type": "פיתקית", "status": 0 },
-        { "address": "לוד - קניון קסם, שדרות מיכה רייסר", "lat": 31.9512, "lng": 34.8942, "type": "KASHCASE", "status": 0 },
-        { "address": "רמלה - קניון עזריאלי רמלה, שמשון הגיבור", "lat": 31.9284, "lng": 34.8715, "type": "פיתקית", "status": 0 },
-        { "address": "שהם - מרכז מסחרי סביונים, קדם", "lat": 31.9542, "lng": 34.9484, "type": "KASHCASE", "status": 0 },
-        { "address": "יבנה - מתחם G, שדרות הסנהדרין", "lat": 31.8794, "lng": 34.7412, "type": "KASHCASE", "status": 0 },
-        { "address": "קריית מלאכי - מתחם קסטינה", "lat": 31.7314, "lng": 34.7984, "type": "פיתקית", "status": 0 },
-        { "address": "שדרות - שופרסל דיל, הרצל", "lat": 31.5212, "lng": 34.5915, "type": "פיתקית", "status": 0 },
-        { "address": "נתיבות - שופרסל דיל, האומן", "lat": 31.4145, "lng": 34.5874, "type": "KASHCASE", "status": 0 },
-        { "address": "אופקים - סופר דהן, הרצל", "lat": 31.3148, "lng": 34.6145, "type": "פיתקית", "status": 0 },
-        { "address": "באר שבע - קניון הנגב, צומת אלי כהן", "lat": 31.2454, "lng": 34.7942, "type": "פיתקית", "status": 0 },
-        { "address": "באר שבע - מתחם מבנה, יצחק נפחא", "lat": 31.2612, "lng": 34.7984, "type": "KASHCASE", "status": 0 },
-        { "address": "דימונה - קניון פרץ סנטר, שדרות הרצל", "lat": 31.0684, "lng": 35.0312, "type": "KASHCASE", "status": 0 },
-        { "address": "ערד - מרכז מסחרי, חן", "lat": 31.2614, "lng": 35.2145, "type": "פיתקית", "status": 0 },
-        { "address": "מצפה רמון - מתחם תחנת הדלק", "lat": 30.6105, "lng": 34.8015, "type": "KASHCASE", "status": 0 },
-        { "address": "ירוחם - מרכז מסחרי, אליהו הנביא", "lat": 30.9874, "lng": 34.9214, "type": "פיתקית", "status": 0 },
-        { "address": "אשקלון - מתחם מרינה מול", "lat": 31.6812, "lng": 34.5572, "type": "KASHCASE", "status": 0 },
-        { "address": "אשדוד - קניון סימול, הגדוד העברי", "lat": 31.7954, "lng": 34.6384, "type": "KASHCASE", "status": 0 },
-        { "address": "גן יבנה - מרכז מסחרי מכבים", "lat": 31.7912, "lng": 34.7105, "type": "פיתקית", "status": 0 },
-        { "address": "קריית עקרון - מתחם בילו סנטר", "lat": 31.8624, "lng": 34.8214, "type": "KASHCASE", "status": 0 },
-        { "address": "גדרה - מתחם מושבה, הרצל", "lat": 31.8145, "lng": 34.7812, "type": "פיתקית", "status": 0 },
-        { "address": "מזכרת בתיה - מרכז מסחרי שפיר", "lat": 31.8542, "lng": 34.8415, "type": "KASHCASE", "status": 0 },
-        { "address": "בני עי''ש - מרכז מסחרי קהילתי", "lat": 31.7915, "lng": 34.7612, "type": "פיתקית", "status": 0 },
-        { "address": "גן שלמה - סופרמרקט מקומי", "lat": 31.8712, "lng": 34.8015, "type": "פיתקית", "status": 0 },
-        { "address": "תל אביב - קניון עזריאלי, דרך מנחם בגין 132", "lat": 32.0745, "lng": 34.7921, "type": "KASHCASE", "status": 0 },
-        { "address": "תל אביב - שוק צפון, ראול ולנברג", "lat": 32.1124, "lng": 34.8354, "type": "פיתקית", "status": 0 },
-        { "address": "תל אביב - קניון רמת אביב, איינשטיין", "lat": 32.1145, "lng": 34.7912, "type": "KASHCASE", "status": 0 },
-        { "address": "בני ברק - מתחם בסר, דרך ז'בוטינסקי", "lat": 32.0942, "lng": 34.8254, "type": "KASHCASE", "status": 0 },
-        { "address": "בני ברק - שופרסל דיל, השומר", "lat": 32.0812, "lng": 34.8412, "type": "פיתקית", "status": 0 },
-        { "address": "גבעתיים - רחוב כצנלסון 60", "lat": 32.0745, "lng": 34.8084, "type": "פיתקית", "status": 0 },
-        { "address": "רמת גן - מתחם הבורסה, גלעד", "lat": 32.0842, "lng": 34.8015, "type": "KASHCASE", "status": 0 },
-        { "address": "פתח תקווה - קניון אבנת, מוטה גור", "lat": 32.0915, "lng": 34.8684, "type": "KASHCASE", "status": 0 },
-        { "address": "ראשון לציון - סינמה סיטי, משה דיין", "lat": 31.9812, "lng": 34.7484, "type": "פיתקית", "status": 0 },
-        { "address": "ראשון לציון - מרכז יס פלאנט, המאה ועשרים", "lat": 31.9742, "lng": 34.7315, "type": "KASHCASE", "status": 0 },
-        { "address": "חולון - קניון חולון, גולדה מאיר", "lat": 32.0094, "lng": 34.7891, "type": "פיתקית", "status": 0 },
-        { "address": "בת ים - קניון בת ים, יוספטל", "lat": 32.0142, "lng": 34.7572, "type": "KASHCASE", "status": 0 },
-        { "address": "נתניה - קניון השרון, הרצל", "lat": 32.3284, "lng": 34.8572, "type": "פיתקית", "status": 0 },
-        { "address": "כפר סבא - קניון ערים, כצנלסון", "lat": 32.1742, "lng": 34.9045, "type": "פיתקית", "status": 0 },
-        { "address": "רעננה - מרכז אלרם, אחוזה", "lat": 32.1845, "lng": 34.8712, "type": "KASHCASE", "status": 0 },
-        { "address": "הרצליה - מתחם ארנה, המנופים", "lat": 32.1612, "lng": 34.7984, "type": "פיתקית", "status": 0 },
-        { "address": "אור יהודה - מתחם קנאור, אליהו סעדון", "lat": 32.0312, "lng": 34.8542, "type": "KASHCASE", "status": 0 },
-        { "address": "קריית אונו - מתחם דרך המלך", "lat": 32.0542, "lng": 34.8614, "type": "פיתקית", "status": 0 },
-        { "address": "גבעת שמואל - מרכז מסחרי עמוס", "lat": 32.0745, "lng": 34.8412, "type": "פיתקית", "status": 0 },
-        { "address": "אלעד - מרכז מסחרי, שמאי", "lat": 32.0512, "lng": 34.9815, "type": "KASHCASE", "status": 0 },
-        { "address": "מודיעין עילית - מרכז מסחרי קסם", "lat": 31.9314, "lng": 35.0412, "type": "פיתקית", "status": 0 },
-        { "address": "ביתר עילית - כיכר העיר, המגיד ממזריטש", "lat": 31.6942, "lng": 35.1145, "type": "KASHCASE", "status": 0 },
-        { "address": "מעלה אדומים - קניון אדומים, דרך הר הצופים", "lat": 31.7812, "lng": 35.3015, "type": "פיתקית", "status": 0 },
-        { "address": "גבעת זאב - מרכז מסחרי שפיר", "lat": 31.8612, "lng": 35.1714, "type": "KASHCASE", "status": 0 },
-        { "address": "אריאל - קניון מגה אור Ariel", "lat": 32.1042, "lng": 35.1845, "type": "KASHCASE", "status": 0 },
-        { "address": "בית שאן - מתחם צים סנטר", "lat": 32.4942, "lng": 35.5015, "type": "פיתקית", "status": 0 },
-        { "address": "יקנעם עילית - קניון G, התמר", "lat": 32.6612, "lng": 35.1145, "type": "KASHCASE", "status": 0 },
-        { "address": "נשר - מתחם מבנה, דרך בר יהודה", "lat": 32.7814, "lng": 35.0442, "type": "פיתקית", "status": 0 },
-        { "address": "קרית אתא - קניון עזריאלי קרית אתא", "lat": 32.8015, "lng": 35.1042, "type": "KASHCASE", "status": 0 },
-        { "address": "קרית מוצקין - קניון רבמד", "lat": 32.8314, "lng": 35.0815, "type": "פיתקית", "status": 0 },
-        { "address": "קרית ביאליק - קניון עופר הקריון", "lat": 32.8445, "lng": 35.0942, "type": "KASHCASE", "status": 0 },
-        { "address": "קרית ים - מרכז מסחרי ניצן", "lat": 32.8512, "lng": 35.0645, "type": "פיתקית", "status": 0 },
-        { "address": "מגדל העמק - מתחם פרץ סנטר", "lat": 32.6742, "lng": 35.2412, "type": "KASHCASE", "status": 0 },
-        { "address": "נוף הגליל - קניון עופר סנטר", "lat": 32.7015, "lng": 35.3142, "type": "KASHCASE", "status": 0 },
-        { "address": "כפיר תבור - מרכז מסחרי מקומי", "lat": 32.6842, "lng": 35.4214, "type": "פיתקית", "status": 0 },
-        { "address": "ראש פינה - מתחם סנטר הגליל", "lat": 32.9712, "lng": 35.5412, "type": "KASHCASE", "status": 0 },
-        { "address": "צפת - מרכז מסחרי דניאל", "lat": 32.9645, "lng": 35.4984, "type": "פיתקית", "status": 0 },
-        { "address": "מעלות תרשיחא - קניון מעלות", "lat": 33.0124, "lng": 35.2715, "type": "KASHCASE", "status": 0 },
-        { "address": "שלומי - מרכז מסחרי שפיר סנטר", "lat": 33.0745, "lng": 35.1484, "type": "פיתקית", "status": 0 },
-        { "address": "זכרון יעקב - קניון זכרון, הנדיב", "lat": 32.5742, "lng": 34.9515, "type": "פיתקית", "status": 0 },
-        { "address": "בנימינה - מתחם תחנת הרכבת", "lat": 32.5145, "lng": 34.9484, "type": "KASHCASE", "status": 0 },
-        { "address": "פרדס חנה כרכור - מתחם ביג", "lat": 32.4812, "lng": 34.9814, "type": "KASHCASE", "status": 0 },
-        { "address": "אור עקיבא - קניון אורות", "lat": 32.4912, "lng": 34.9215, "type": "פיתקית", "status": 0 },
-        { "address": "גבעת עדה - מרכז קהילתי מסחרי", "lat": 32.5015, "lng": 35.0142, "type": "פיתקית", "status": 0 },
-        { "address": "טירת כרמל - מרכז מסחרי שפיר", "lat": 32.7612, "lng": 34.9742, "type": "KASHCASE", "status": 0 },
-        { "address": "עלית - מרכז קניות מסחרי", "lat": 32.8912, "lng": 35.1845, "type": "פיתקית", "status": 0 }
-    ];
-
-    let currentMachinesList = [];
-
-    async function fetchLiveData() {
-        const statusDiv = document.getElementById('connectionStatus');
-        const targetUrl = 'https://cycle-app-bucket.s3.amazonaws.com/cycledata.js';
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2500);
-
-        try {
-            const response = await fetch(proxyUrl, { signal: controller.signal });
-            clearTimeout(timeoutId);
-            
-            if (!response.ok) throw new Error('Network error');
-            
-            const wrapper = await response.json();
-            let rawText = wrapper.contents;
-            rawText = rawText.replace('const cycleData =', '').trim();
-            if(rawText.endsWith(';')) rawText = rawText.slice(0, -1);
-            
-            const liveData = JSON.parse(rawText);
-            
-            if (liveData && liveData.length > 0) {
-                currentMachinesList = liveData;
-                statusDiv.innerText = "🟢 מחובר בזמן אמת: נתוני הקיבולת והסטטוס מעודכנים משרתי Cycle הארציים";
-                statusDiv.className = "status-bar status-live";
-                renderTable();
-                return;
-            }
-        } catch (error) {
-            console.log("Live fetch timed out or blocked, loading full backup data instead.");
-        }
-
-        // טעינת הגיבוי הארצי המלא (קורה בשבריר שנייה)
-        currentMachinesList = backupData;
-        statusDiv.innerText = "🟡 מצב מקומי: מציג את כל המיקומים בארץ (נתוני פנוי/מלא בזמן אמת חסומים ברשת זו)";
-        statusDiv.className = "status-bar status-backup";
-        renderTable();
-    }
-
     function renderTable() {
         const tbody = document.getElementById('tableBody');
-        let htmlRows = '';
-
-        currentMachinesList.forEach((machine, index) => {
-            const addressText = machine.address || '';
-            const rawType = machine.type || '';
-            
-            let isKashcase = rawType.toUpperCase().includes('KASHCASE') || 
-                             addressText.toUpperCase().includes('KASHCASE') || 
-                             addressText.includes('כפר מימון') || 
-                             addressText.includes('סעד');
-            const currentTypeStr = isKashcase ? 'KASHCASE' : 'פיתקית';
-            const typeBadge = isKashcase ? '<span class="type-kashcash">KASHCASE</span>' : '<span class="type-pitkit">פיתקית</span>';
-
-            const isFull = (machine.status === 1 || machine.status === "1");
-            const statusStr = isFull ? 'full' : 'available';
-            const statusBadge = isFull 
-                ? '<div class="status-indicator"><span class="dot dot-full"></span><span class="text-full">מלאה</span></div>' 
-                : '<div class="status-indicator"><span class="dot dot-available"></span><span class="text-available">פנויה</span></div>';
-
-            const lat = machine.lat || 0;
-            const lng = machine.lng || 0;
-            const wazeUrl = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
-
-            htmlRows += `
-                <tr data-machine-type="${currentTypeStr}" data-machine-status="${statusStr}">
-                    <td><span class="badge badge-index">${index + 1}</span></td>
-                    <td>${typeBadge}</td>
-                    <td>${statusBadge}</td>
-                    <td><b>${addressText}</b></td>
-                    <td><code>${lat}</code></td>
-                    <td><code>${lng}</code></td>
-                    <td>
-                        <a href="${wazeUrl}" target="_blank" class="waze-btn">🚗 ניווט</a>
-                    </td>
-                </tr>
-            `;
-        });
-
-        tbody.innerHTML = htmlRows;
-        document.getElementById('machineCounter').innerText = `נמצאו: ${currentMachinesList.length} מכונות במערכת`;
-        filterTable();
-    }
-
-    function filterTable() {
-        const filterText = document.getElementById('searchInput').value.toLowerCase().trim();
-        const filterType = document.getElementById('typeFilter').value;
-        const filterStatus = document.getElementById('statusFilter').value;
-        const rows = document.getElementById('tableBody').getElementsByTagName('tr');
-        let visibleCount = 0;
-
-        for (let i = 0; i < rows.length; i++) {
-            const row = rows[i];
-            const textContent = row.textContent || row.innerText;
-            const machineType = row.getAttribute('data-machine-type');
-            const machineStatus = row.getAttribute('data-machine-status');
-            
-            const matchesSearch = textContent.toLowerCase().indexOf(filterText) > -1;
-            const matchesType = (filterType === 'all' || machineType === filterType);
-            const matchesStatus = (filterStatus === 'all' || machineStatus === filterStatus);
-
-            if (matchesSearch && matchesType && matchesStatus) {
-                row.style.display = "";
-                visibleCount++;
-            } else {
-                row.style.display = "none";
-            }
+        const statusDiv = document.getElementById('connectionStatus');
+        
+        // בדיקה אם הנתונים נטענו מהקובץ
+        if (typeof cycleData === 'undefined') {
+            statusDiv.innerHTML = "⚠️ שגיאה: קובץ הנתונים (data.js) לא נמצא או ריק.";
+            return;
         }
-        document.getElementById('machineCounter').innerText = `נמצאו: ${visibleCount} מכונות תואמות לסינון`;
+
+        const updateTime = typeof lastUpdate !== 'undefined' ? lastUpdate : "לא ידוע";
+        statusDiv.innerHTML = `🟢 נתונים מעודכנים. עדכון אחרון: ${updateTime}`;
+
+        let html = '';
+        cycleData.forEach((m, i) => {
+            const isFull = (m.status == 1);
+            const statusClass = isFull ? 'bg-red' : 'bg-green';
+            const statusText = isFull ? 'מלאה' : 'פנויה';
+            
+            html += `<tr>
+                <td>${i+1}</td>
+                <td>${m.type || 'N/A'}</td>
+                <td><span class="dot ${statusClass}"></span>${statusText}</td>
+                <td>${m.address}</td>
+                <td><a href="https://waze.com/ul?ll=${m.lat},${m.lng}&navigate=yes" target="_blank">ניווט</a></td>
+            </tr>`;
+        });
+        tbody.innerHTML = html;
     }
 
-    document.addEventListener('DOMContentLoaded', fetchLiveData);
+    // הפעלה כשהדף נטען
+    window.onload = renderTable;
 </script>
 
 </body>
