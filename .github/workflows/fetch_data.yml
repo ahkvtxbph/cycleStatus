@@ -1,0 +1,22 @@
+name: Fetch Cycle Data
+on:
+  schedule:
+    - cron: '0 * * * *' # ירוץ כל שעה עגולה
+  workflow_dispatch:      # מאפשר להריץ ידנית בלחיצת כפתור
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Fetch data
+        run: |
+          curl -o data.js https://cycle-app-bucket.s3.amazonaws.com/cycledata.js
+          echo "const lastUpdate = '$(date +'%d/%m/%Y %H:%M:%S')';" >> data.js
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add data.js
+          git commit -m "Update machine data"
+          git push
