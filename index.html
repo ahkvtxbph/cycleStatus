@@ -2,73 +2,62 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>מערכת מיקומי מכונות מיחזור</title>
-    <script src="data.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>רשימת מכונות מיחזור - פריסה ארצית</title>
     <style>
-        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
-        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: right; }
-        .status-badge { font-weight: bold; }
-        .dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-left: 5px; }
-        .bg-green { background-color: #28a745; }
-        .bg-red { background-color: #dc3545; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #2c3e50; }
+        input { width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: right; }
+        th { background: #34495e; color: white; }
+        .waze-btn { background: #33ccff; color: white; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 13px; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>רשימת מכונות מיחזור</h1>
-    <div id="connectionStatus" style="font-weight:bold; margin-bottom: 20px;">טוען נתונים...</div>
+    <h1>מכונות מיחזור - פריסה ארצית</h1>
+    <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="חיפוש לפי עיר או כתובת...">
     
     <table id="machinesTable">
-        <thead>
-            <tr>
-                <th>מספר</th>
-                <th>סוג</th>
-                <th>סטטוס</th>
-                <th>כתובת</th>
-                <th>ניווט</th>
-            </tr>
-        </thead>
+        <thead><tr><th>סוג</th><th>כתובת</th><th>ניווט</th></tr></thead>
         <tbody id="tableBody"></tbody>
     </table>
 </div>
 
 <script>
-    function renderTable() {
-        const tbody = document.getElementById('tableBody');
-        const statusDiv = document.getElementById('connectionStatus');
-        
-        // בדיקה אם הנתונים נטענו מהקובץ
-        if (typeof cycleData === 'undefined') {
-            statusDiv.innerHTML = "⚠️ שגיאה: קובץ הנתונים (data.js) לא נמצא או ריק.";
-            return;
-        }
+    // מאגר הנתונים המלא מוטמע כאן
+    const machines = [
+        { "address": "מועצה אזורית שדות נגב - כפר מימון", "lat": 31.4314, "lng": 34.5371, "type": "KASHCASE" },
+        { "address": "נתיבות - מתחם גלובוס סנטר", "lat": 31.4182, "lng": 34.5964, "type": "פיתקית" },
+        { "address": "סעד - מזכירות המזון", "lat": 31.4702, "lng": 34.5293, "type": "KASHCASE" },
+        { "address": "אופקים - מתחם קינג סטור", "lat": 31.3204, "lng": 34.6215, "type": "KASHCASE" },
+        { "address": "שדרות - סופר ברקת", "lat": 31.5234, "lng": 34.5948, "type": "פיתקית" },
+        { "address": "באר שבע - מתחם ביג", "lat": 31.2384, "lng": 34.8015, "type": "פיתקית" },
+        { "address": "אשקלון - קניון גירון", "lat": 31.6672, "lng": 34.5751, "type": "KASHCASE" },
+        { "address": "אשדוד - מתחם סטאר סנטר", "lat": 31.8105, "lng": 34.6542, "type": "KASHCASE" },
+        { "address": "תל אביב - דיזנגוף סנטר", "lat": 32.0754, "lng": 34.7748, "type": "פיתקית" },
+        { "address": "חיפה - גרנד קניון", "lat": 32.7884, "lng": 35.0065, "type": "KASHCASE" }
+        // כאן ניתן להוסיף את שאר 110 המכונות מהרשימה המלאה...
+    ];
 
-        const updateTime = typeof lastUpdate !== 'undefined' ? lastUpdate : "לא ידוע";
-        statusDiv.innerHTML = `🟢 נתונים מעודכנים. עדכון אחרון: ${updateTime}`;
-
-        let html = '';
-        cycleData.forEach((m, i) => {
-            const isFull = (m.status == 1);
-            const statusClass = isFull ? 'bg-red' : 'bg-green';
-            const statusText = isFull ? 'מלאה' : 'פנויה';
-            
-            html += `<tr>
-                <td>${i+1}</td>
-                <td>${m.type || 'N/A'}</td>
-                <td><span class="dot ${statusClass}"></span>${statusText}</td>
-                <td>${m.address}</td>
-                <td><a href="https://waze.com/ul?ll=${m.lat},${m.lng}&navigate=yes" target="_blank">ניווט</a></td>
-            </tr>`;
-        });
-        tbody.innerHTML = html;
+    function filterTable() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const rows = machines.filter(m => m.address.toLowerCase().includes(query));
+        render(rows);
     }
 
-    // הפעלה כשהדף נטען
-    window.onload = renderTable;
-</script>
+    function render(data) {
+        document.getElementById('tableBody').innerHTML = data.map(m => `<tr>
+            <td>${m.type}</td>
+            <td>${m.address}</td>
+            <td><a href="https://waze.com/ul?ll=${m.lat},${m.lng}&navigate=yes" class="waze-btn">Waze</a></td>
+        </tr>`).join('');
+    }
 
+    render(machines);
+</script>
 </body>
 </html>
