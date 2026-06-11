@@ -3,43 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מכונות מיחזור - פריסה ארצית</title>
+    <title>רשימת מכונות מיחזור</title>
     <style>
-        body { font-family: sans-serif; background-color: #f4f7f6; padding: 20px; text-align: right; }
+        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
         .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: right; }
-        th { background-color: #34495e; color: white; }
-        .waze-link { background: #33ccff; color: white; padding: 5px 10px; border-radius: 4px; text-decoration: none; }
+        th { background: #34495e; color: white; }
+        .dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-left: 8px; }
+        .bg-green { background-color: #28a745; }
+        .bg-red { background-color: #dc3545; }
+        .waze-btn { background: #33ccff; color: white; padding: 5px 10px; border-radius: 4px; text-decoration: none; font-size: 13px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>רשימת מכונות מיחזור</h1>
+    <h1>סטטוס מכונות מיחזור</h1>
     <table id="machinesTable">
-        <thead>
-            <tr><th>סוג</th><th>כתובת</th><th>ניווט</th></tr>
-        </thead>
+        <thead><tr><th>סוג</th><th>כתובת</th><th>סטטוס</th><th>ניווט</th></tr></thead>
         <tbody id="tableBody"></tbody>
     </table>
 </div>
 
 <script>
-    // כאן נמצאת הרשימה המלאה שלך. 
-    // תוכל להוסיף כאן את כל 120 המכונות במבנה הזה:
+    // הנתונים המלאים (0 = פנויה, 1 = מלאה)
     const machines = [
-        { "address": "כפר מימון - מרכז מסחרי", "lat": 31.4314, "lng": 34.5371, "type": "KASHCASE" },
-        { "address": "נתיבות - מתחם גלובוס סנטר", "lat": 31.4182, "lng": 34.5964, "type": "פיתקית" }
-        // פשוט המשך כאן את הרשימה עם פסיקים ביניהם...
+        { "address": "כפר מימון - מרכז מסחרי", "lat": 31.4314, "lng": 34.5371, "type": "KASHCASE", "status": 0 },
+        { "address": "נתיבות - מתחם גלובוס סנטר", "lat": 31.4182, "lng": 34.5964, "type": "פיתקית", "status": 1 }
+        // כאן תוסיף את שאר המכונות שלך...
     ];
 
     const tbody = document.getElementById('tableBody');
     machines.forEach(m => {
+        const statusClass = m.status === 1 ? 'bg-red' : 'bg-green';
+        const statusText = m.status === 1 ? 'מלאה' : 'פנויה';
+        
         tbody.innerHTML += `<tr>
             <td>${m.type}</td>
             <td>${m.address}</td>
-            <td><a href="https://waze.com/ul?ll=${m.lat},${m.lng}&navigate=yes" class="waze-link" target="_blank">Waze</a></td>
+            <td><span class="dot ${statusClass}"></span>${statusText}</td>
+            <td><a href="https://waze.com/ul?ll=${m.lat},${m.lng}&navigate=yes" class="waze-btn" target="_blank">Waze</a></td>
         </tr>`;
     });
 </script>
