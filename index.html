@@ -2,29 +2,36 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>מכונות מיחזור</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מכונות מיחזור - פריסה ארצית</title>
     <style>
-        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 10px; border-bottom: 1px solid #ddd; text-align: right; }
+        body { font-family: sans-serif; background-color: #f4f7f6; padding: 20px; text-align: right; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: right; }
+        th { background-color: #34495e; color: white; }
+        .waze-link { background: #33ccff; color: white; padding: 5px 10px; border-radius: 4px; text-decoration: none; }
     </style>
 </head>
 <body>
+
 <div class="container">
     <h1>רשימת מכונות מיחזור</h1>
     <table id="machinesTable">
-        <thead><tr><th>סוג</th><th>כתובת</th><th>ניווט</th></tr></thead>
+        <thead>
+            <tr><th>סוג</th><th>כתובת</th><th>ניווט</th></tr>
+        </thead>
         <tbody id="tableBody"></tbody>
     </table>
 </div>
 
 <script>
-    // הנתונים מוטמעים כאן ישירות בקוד - זה ימנע את השגיאה של "קובץ לא נמצא"
+    // כאן נמצאת הרשימה המלאה שלך. 
+    // תוכל להוסיף כאן את כל 120 המכונות במבנה הזה:
     const machines = [
         { "address": "כפר מימון - מרכז מסחרי", "lat": 31.4314, "lng": 34.5371, "type": "KASHCASE" },
         { "address": "נתיבות - מתחם גלובוס סנטר", "lat": 31.4182, "lng": 34.5964, "type": "פיתקית" }
-        // ... כאן תוכל להוסיף עוד שורות כאלו עם הנתונים שלך
+        // פשוט המשך כאן את הרשימה עם פסיקים ביניהם...
     ];
 
     const tbody = document.getElementById('tableBody');
@@ -32,7 +39,7 @@
         tbody.innerHTML += `<tr>
             <td>${m.type}</td>
             <td>${m.address}</td>
-            <td><a href="https://waze.com/ul?ll=${m.lat},${m.lng}&navigate=yes" target="_blank">Waze</a></td>
+            <td><a href="https://waze.com/ul?ll=${m.lat},${m.lng}&navigate=yes" class="waze-link" target="_blank">Waze</a></td>
         </tr>`;
     });
 </script>
