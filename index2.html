@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת מיקומי מכונות מיחזור - מועצה אזורית שדות נגב</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1150px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 25px;
+        }
+        .status-bar {
+            text-align: center;
+            font-size: 13px;
+            font-weight: bold;
+            padding: 6px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        .status-live { background-color: #d4edda; color: #155724; }
+        .status-backup { background-color: #fff3cd; color: #856404; }
+        .status-loading { background-color: #e2e3e5; color: #383d41; }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+            background: #fafbfc;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #eaeaea;
+        }
+        .search-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        input[type="text"], select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        input[type="text"] { width: 280px; }
+        select { background-color: white; cursor: pointer; }
+        
+        .refresh-btn {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: background-color 0.2s;
+        }
+        .refresh-btn:hover { background-color: #27ae60; }
+        .refresh-btn:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+
+        .counter {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: right;
+            border-bottom: 1px solid #ddd;
+            vertical-align: middle;
+        }
+        th {
+            background-color: #34495e;
+            color: white;
+        }
+        tr:hover { background-color: #f5f5f5; }
+        
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: white;
+            font-weight: bold;
+        }
+        .badge-index { background-color: #7f8c8d; }
+        
+        .type-kashcash {
+            background-color: #0056b3;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .type-pitkit {
+            background-color: #28a745;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .waze-btn {
+            background-color: #33ccff;
+            color: #2c3e50;
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .waze-btn:hover {
+            background-color: #00bfff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>רשימת מכונות מיחזור - שדות נגב ופריסה ארצית</h1>
+    <div class="subtitle">מערכת דינמית - עדכון אוטומטי בזמן אמת משרתי Cycle</div>
+    
+    <div id="connectionStatus" class="status-bar status-loading">טוען נתונים...</div>
+
+    <div class="controls">
+        <div class="search-group">
+            <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="חפש לפי יישוב, רחוב או רשת...">
+            
+            <select id="typeFilter" onchange="filterTable()">
+                <option value="all">כל סוגי המכונות</option>
+                <option value="פיתקית">מכונת פיתקית</option>
+                <option value="KASHCASE">מכונת KASHCASE</option>
+            </select>
+
+            <button id="refreshBtn" class="refresh-btn" onclick="fetchLiveData()">
+                🔄 רענן נתונים
+            </button>
+        </div>
+        
+        <div id="machineCounter" class="counter">טוען נתונים...</div>
+    </div>
+
+    <table id="machinesTable">
+        <thead>
+            <tr>
+                <th>מספר</th>
+                <th>סוג מכונה</th>
+                <th>מיקום / כתובת מלאה</th>
+                <th>קו רוחב (Lat)</th>
+                <th>קו אורך (Lng)</th>
+                <th>פעולות ניווט</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // נתוני גיבוי מקומיים
+    const backupData = [
+        { "address": "מועצה אזורית שדות נגב - כפר מימון (מרכז מסחרי)", "lat": 31.431401, "lng": 34.537118, "type": "KASHCASE" },
+        { "address": "נתיבות - מתחם גלובוס סנטר, שדרות ירושלים", "lat": 31.4182, "lng": 34.5964, "type": "פיתקית" },
+        { "address": "מועצה אזורית שדות נגב - סעד (מזכירות המזון)", "lat": 31.4702, "lng": 34.5293, "type": "KASHCASE" },
+        { "address": "אופקים - מתחם קניות קינג סטור, דרך הטייסים", "lat": 31.3204, "lng": 34.6215, "type": "KASHCASE" },
+        { "address": "שדרות - סופר ברקת, כיכר הנשיא", "lat": 31.5234, "lng": 34.5948, "type": "פיתקית" },
+        { "address": "שדרות - מתחם מול שדרות, דרך מנחם בגין", "lat": 31.5189, "lng": 34.5872, "type": "KASHCASE" },
+        { "address": "באר שבע - מתחם ביג, דרך חברון", "lat": 31.2384, "lng": 34.8015, "type": "פיתקית" },
+        { "address": "באר שבע - גראנד קניון, שדרות דוד טוביהו", "lat": 31.2512, "lng": 34.7794, "type": "KASHCASE" },
+        { "address": "אשקלון - מתחם קוסמוס, שדרות בן גוריון", "lat": 31.6508, "lng": 34.5684, "type": "פיתקית" },
+        { "address": "אשקלון - קניון גירון, שדרות הנשיא", "lat": 31.6672, "lng": 34.5751, "type": "KASHCASE" },
+        { "address": "אשדוד - מתחם סטאר סנטר, ז'בוטינסקי", "lat": 31.8105, "lng": 34.6542, "type": "KASHCASE" },
+        { "address": "אשדוד - קניון סי מול, הגדוד העברי", "lat": 31.7942, "lng": 34.6421, "type": "פיתקית" }
+    ];
+
+    let currentMachinesList = [];
+
+    // מנסה לפרסר JSON גמיש - מחלץ מערך מתוך כל תגובת טקסט
+    function parseAnyJSON(rawText) {
+        const startIdx = rawText.indexOf('[');
+        const endIdx = rawText.lastIndexOf(']');
+        if (startIdx === -1 || endIdx === -1) return null;
+        const jsonString = rawText.substring(startIdx, endIdx + 1);
+        const parsed = JSON.parse(jsonString);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        return null;
+    }
+
+    // fetch עם timeout מובנה
+    function fetchWithTimeout(url, timeoutMs = 8000) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        return fetch(url, { signal: controller.signal })
+            .finally(() => clearTimeout(timer));
+    }
+
+    async function fetchLiveData() {
+        const statusDiv = document.getElementById('connectionStatus');
+        const refreshBtn = document.getElementById('refreshBtn');
+
+        statusDiv.innerText = "⏳ מתחבר לשרת ומעדכן נתונים בזמן אמת...";
+        statusDiv.className = "status-bar status-loading";
+        refreshBtn.disabled = true;
+        refreshBtn.innerText = "🔄 טוען...";
+
+        const s3Url = 'https://cycle-app-bucket.s3.amazonaws.com/cycledata.js';
+        const cacheBust = '?nocache=' + Date.now();
+
+        // אסטרטגיה 1: גישה ישירה ל-S3
+        try {
+            const res = await fetchWithTimeout(s3Url + cacheBust, 6000);
+            if (res.ok) {
+                const text = await res.text();
+                const data = parseAnyJSON(text);
+                if (data) return onSuccess(data, 'S3 ישיר');
+            }
+        } catch (e) {
+            console.warn('גישה ישירה ל-S3 נכשלה:', e.message);
+        }
+
+        // אסטרטגיה 2: allorigins.win עם fetch רגיל (לא JSONP)
+        try {
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(s3Url + cacheBust)}`;
+            const res = await fetchWithTimeout(proxyUrl, 8000);
+            if (res.ok) {
+                const json = await res.json();
+                if (json && json.contents) {
+                    const data = parseAnyJSON(json.contents);
+                    if (data) return onSuccess(data, 'allorigins proxy');
+                }
+            }
+        } catch (e) {
+            console.warn('allorigins נכשל:', e.message);
+        }
+
+        // אסטרטגיה 3: corsproxy.io
+        try {
+            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(s3Url + cacheBust)}`;
+            const res = await fetchWithTimeout(proxyUrl, 8000);
+            if (res.ok) {
+                const text = await res.text();
+                const data = parseAnyJSON(text);
+                if (data) return onSuccess(data, 'corsproxy.io');
+            }
+        } catch (e) {
+            console.warn('corsproxy.io נכשל:', e.message);
+        }
+
+        // אף אסטרטגיה לא הצליחה - מצב גיבוי
+        useBackupMode();
+        refreshBtn.disabled = false;
+        refreshBtn.innerText = "🔄 רענן נתונים";
+
+        function onSuccess(data, source) {
+            currentMachinesList = data;
+            const now = new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+            statusDiv.innerText = `🟢 מחובר בזמן אמת: הנתונים עודכנו משרת Cycle דרך ${source} (עדכון: ${now})`;
+            statusDiv.className = "status-bar status-live";
+            renderTable();
+            refreshBtn.disabled = false;
+            refreshBtn.innerText = "🔄 רענן נתונים";
+        }
+    }
+
+    function useBackupMode() {
+        const statusDiv = document.getElementById('connectionStatus');
+        currentMachinesList = backupData;
+        statusDiv.innerText = "🟡 מצב מקומי (אופליין): מציג נתונים שמורים מראש (לא נרשם חיבור לשרת)";
+        statusDiv.className = "status-bar status-backup";
+        renderTable();
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        let htmlRows = '';
+
+        currentMachinesList.forEach((machine, index) => {
+            const addressText = machine.address || '';
+            const rawType = machine.type || '';
+            
+            let isKashcase = rawType.toUpperCase().includes('KASHCASE') || 
+                             addressText.toUpperCase().includes('KASHCASE') || 
+                             addressText.includes('כפר מימון') || 
+                             addressText.includes('סעד');
+
+            const currentTypeStr = isKashcase ? 'KASHCASE' : 'פיתקית';
+            const typeBadge = isKashcase 
+                ? '<span class="type-kashcash">KASHCASE</span>' 
+                : '<span class="type-pitkit">פיתקית</span>';
+
+            const lat = machine.lat || 0;
+            const lng = machine.lng || 0;
+            const wazeUrl = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
+
+            htmlRows += `
+                <tr data-machine-type="${currentTypeStr}">
+                    <td><span class="badge badge-index">${index + 1}</span></td>
+                    <td>${typeBadge}</td>
+                    <td><b>${addressText}</b></td>
+                    <td><code>${lat}</code></td>
+                    <td><code>${lng}</code></td>
+                    <td>
+                        <a href="${wazeUrl}" target="_blank" class="waze-btn">
+                            🚗 ניווט ב-Waze
+                        </a>
+                    </td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = htmlRows;
+        document.getElementById('machineCounter').innerText = `נמצאו: ${currentMachinesList.length} מכונות במערכת`;
+        filterTable();
+    }
+
+    function filterTable() {
+        const filterText = document.getElementById('searchInput').value.toLowerCase().trim();
+        const filterType = document.getElementById('typeFilter').value;
+        const rows = document.getElementById('tableBody').getElementsByTagName('tr');
+        let visibleCount = 0;
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const textContent = row.textContent || row.innerText;
+            const machineType = row.getAttribute('data-machine-type');
+            const matchesSearch = textContent.toLowerCase().indexOf(filterText) > -1;
+            const matchesType = (filterType === 'all' || machineType === filterType);
+
+            if (matchesSearch && matchesType) {
+                row.style.display = "";
+                visibleCount++;
+            } else {
+                row.style.display = "none";
+            }
+        }
+        document.getElementById('machineCounter').innerText = `נמצאו: ${visibleCount} מכונות תואמות לסינון`;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchLiveData();
+        setInterval(fetchLiveData, 3600000);
+    });
+</script>
+
+</body>
+</html>
