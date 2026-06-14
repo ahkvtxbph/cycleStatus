@@ -161,7 +161,7 @@
     <h1>רשימת מכונות מיחזור - שדות נגב ופריסה ארצית</h1>
     <div class="subtitle">מערכת דינמית - עדכון אוטומטי בזמן אמת משרתי Cycle</div>
     
-    <div id="connectionStatus" class="status-bar status-loading">⏳ מתחבר לשרת ומעדכן נתונים בזמן אמת...</div>
+    <div id="connectionStatus" class="status-bar status-loading">טוען נתונים...</div>
 
     <div class="controls">
         <div class="search-group">
@@ -198,7 +198,6 @@
 </div>
 
 <script>
-    // נתוני גיבוי מקומיים
     const backupData = [
         { "address": "מועצה אזורית שדות נגב - כפר מימון (מרכז מסחרי)", "lat": 31.431401, "lng": 34.537118, "type": "KASHCASE" },
         { "address": "נתיבות - מתחם גלובוס סנטר, שדרות ירושלים", "lat": 31.4182, "lng": 34.5964, "type": "פיתקית" },
@@ -216,12 +215,7 @@
 
     let currentMachinesList = [];
 
-    // הגדרת משתנה גלובלי למניעת קריסות אם הסקריפט החיצוני נטען מהר
-    if (typeof window.cycleData === 'undefined') {
-        window.cycleData = null;
-    }
-
-    function fetchLiveData() {
+    async function fetchLiveData() {
         const statusDiv = document.getElementById('connectionStatus');
         const refreshBtn = document.getElementById('refreshBtn');
         
@@ -230,47 +224,51 @@
         refreshBtn.disabled = true;
         refreshBtn.innerText = "🔄 טוען...";
 
-        // הסרת אלמנט סקריפט קודם אם קיים (לצורך רענון נקי)
-        const oldScript = document.getElementById('cycle-data-script');
-        if (oldScript) oldScript.remove();
+        const targetUrl = 'https://cycle-app-bucket.s3.amazonaws.com/cycledata.js';
+        // שימוש בפרוקסי קורס פתוח ויציב
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
 
-        // יצירת תגית סקריפט דינמית שעוקפת חסימות CORS לחלוטין
-        const script = document.createElement('script');
-        script.id = 'cycle-data-script';
-        // הוספת חותמת זמן ייחודית כדי למנוע מהדפדפן לשמור Cache ישן של הקובץ
-        script.src = `https://cycle-app-bucket.s3.amazonaws.com/cycledata.js?v=${Date.now()}`;
-        
-        // הצלחה: הקובץ נטען בהצלחה משרת אמזון
-        script.onload = function() {
-            if (window.cycleData && Array.isArray(window.cycleData) && window.cycleData.length > 0) {
-                currentMachinesList = window.cycleData;
-                const now = new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'});
-                statusDiv.innerText = `🟢 מחובר בזמן אמת: הנתונים עודכנו משרת Cycle (עדכון אחרון: ${now})`;
-                statusDiv.className = "status-bar status-live";
-            } else {
-                useBackupMode("נתונים ריקים מהשרת");
+        try {
+            const response = await fetch(proxyUrl);
+            if (!response.ok) throw new Error('Network response failure');
+            
+            let rawText = await response.text();
+            
+            if (rawText) {
+                // חילוץ חכם של ה-JSON: מוצא איפה המערך מתחיל [ ואיפה הוא נגמר ] 
+                // זה עוקף לחלוטין את התלות בשם המשתנה בקובץ המקורי!
+                const startIdx = rawText.indexOf('[');
+                const endIdx = rawText.lastIndexOf(']');
+                
+                if (startIdx !== -1 && endIdx !== -1) {
+                    const jsonString = rawText.substring(startIdx, endIdx + 1);
+                    const liveData = JSON.parse(jsonString);
+                    
+                    if (liveData && Array.isArray(liveData) && liveData.length > 0) {
+                        currentMachinesList = liveData;
+                        const now = new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'});
+                        statusDiv.innerText = `🟢 מחובר בזמן אמת: הנתונים עודכנו משרת Cycle (עדכון אחרון: ${now})`;
+                        statusDiv.className = "status-bar status-live";
+                        renderTable();
+                        
+                        refreshBtn.disabled = false;
+                        refreshBtn.innerText = "🔄 רענן נתונים";
+                        return;
+                    }
+                }
             }
-            renderTable();
-            refreshBtn.disabled = false;
-            refreshBtn.innerText = "🔄 רענן נתונים";
-        };
+        } catch (error) {
+            console.error("קריאת קובץ נכשלה:", error);
+        }
 
-        // כישלון: השרת נפל או חסם את הבקשה
-        script.onerror = function() {
-            useBackupMode("שגיאת התחברות לשרת");
-            renderTable();
-            refreshBtn.disabled = false;
-            refreshBtn.innerText = "🔄 רענן נתונים";
-        };
-
-        document.head.appendChild(script);
-    }
-
-    function useBackupMode(reason) {
-        const statusDiv = document.getElementById('connectionStatus');
+        // גיבוי מקומי במקרה של כשל
         currentMachinesList = backupData;
-        statusDiv.innerText = `🟡 מצב מקומי (אופליין): מציג נתונים שמורים מראש (${reason})`;
+        statusDiv.innerText = "🟡 מצב מקומי (אופליין): מציג נתונים שמורים מראש (לא נרשם חיבור לשרת)";
         statusDiv.className = "status-bar status-backup";
+        renderTable();
+        
+        refreshBtn.disabled = false;
+        refreshBtn.innerText = "🔄 רענן נתונים";
     }
 
     function renderTable() {
@@ -339,10 +337,8 @@
         document.getElementById('machineCounter').innerText = `נמצאו: ${visibleCount} מכונות תואמות לסינון`;
     }
 
-    // הפעלה ראשונית של הטעינה
     document.addEventListener('DOMContentLoaded', () => {
         fetchLiveData();
-        // רענון אוטומטי מלא ברקע כל שעה עגולה
         setInterval(fetchLiveData, 3600000);
     });
 </script>
