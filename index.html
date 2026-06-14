@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מערכת מיקומי מכונות מיחזור - מועצה אזורית שדות נגב</title>
+    <title>מערכת מיקומי מכונות מיחזור</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -198,6 +198,7 @@
 </div>
 
 <script>
+    // נתוני גיבוי מקומיים
     const backupData = [
         { "address": "מועצה אזורית שדות נגב - כפר מימון (מרכז מסחרי)", "lat": 31.431401, "lng": 34.537118, "type": "KASHCASE" },
         { "address": "נתיבות - מתחם גלובוס סנטר, שדרות ירושלים", "lat": 31.4182, "lng": 34.5964, "type": "פיתקית" },
@@ -215,7 +216,8 @@
 
     let currentMachinesList = [];
 
-    async function fetchLiveData() {
+    // פונקציית משיכת נתונים אמינה דרך JSONP ועקיפת כל חסימות אמזון
+    function fetchLiveData() {
         const statusDiv = document.getElementById('connectionStatus');
         const refreshBtn = document.getElementById('refreshBtn');
         
@@ -224,51 +226,72 @@
         refreshBtn.disabled = true;
         refreshBtn.innerText = "🔄 טוען...";
 
-        const targetUrl = 'https://cycle-app-bucket.s3.amazonaws.com/cycledata.js';
-        // שימוש בפרוקסי קורס פתוח ויציב
-        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
-
-        try {
-            const response = await fetch(proxyUrl);
-            if (!response.ok) throw new Error('Network response failure');
-            
-            let rawText = await response.text();
-            
-            if (rawText) {
-                // חילוץ חכם של ה-JSON: מוצא איפה המערך מתחיל [ ואיפה הוא נגמר ] 
-                // זה עוקף לחלוטין את התלות בשם המשתנה בקובץ המקורי!
-                const startIdx = rawText.indexOf('[');
-                const endIdx = rawText.lastIndexOf(']');
-                
-                if (startIdx !== -1 && endIdx !== -1) {
-                    const jsonString = rawText.substring(startIdx, endIdx + 1);
-                    const liveData = JSON.parse(jsonString);
+        // הגדרת שם פונקציית Callback ייחודית בתוך חלון הדפדפן
+        const callbackName = 'jsonp_callback_' + Date.now();
+        
+        window[callbackName] = function(data) {
+            try {
+                if (data && data.contents) {
+                    let rawText = data.contents;
                     
-                    if (liveData && Array.isArray(liveData) && liveData.length > 0) {
-                        currentMachinesList = liveData;
-                        const now = new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'});
-                        statusDiv.innerText = `🟢 מחובר בזמן אמת: הנתונים עודכנו משרת Cycle (עדכון אחרון: ${now})`;
-                        statusDiv.className = "status-bar status-live";
-                        renderTable();
+                    // חילוץ המערך מתוך השרת [ ... ]
+                    const startIdx = rawText.indexOf('[');
+                    const endIdx = rawText.lastIndexOf(']');
+                    
+                    if (startIdx !== -1 && endIdx !== -1) {
+                        const jsonString = rawText.substring(startIdx, endIdx + 1);
+                        const liveData = JSON.parse(jsonString);
                         
-                        refreshBtn.disabled = false;
-                        refreshBtn.innerText = "🔄 רענן נתונים";
-                        return;
+                        if (liveData && Array.isArray(liveData) && liveData.length > 0) {
+                            currentMachinesList = liveData;
+                            const now = new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'});
+                            statusDiv.innerText = `🟢 מחובר בזמן אמת: הנתונים עודכנו משרת Cycle (עדכון אחרון: ${now})`;
+                            statusDiv.className = "status-bar status-live";
+                            renderTable();
+                            cleanUp();
+                            return;
+                        }
                     }
                 }
+            } catch (e) {
+                console.error("שגיאה בעיבוד הנתונים:", e);
             }
-        } catch (error) {
-            console.error("קריאת קובץ נכשלה:", error);
-        }
+            
+            // נסיגה לגיבוי במקרה והעיבוד נכשל
+            useBackupMode();
+            cleanUp();
+        };
 
-        // גיבוי מקומי במקרה של כשל
+        // בניית כתובת הבקשה עם הגנת מניעת מטמון (Cache Buster)
+        const targetUrl = 'https://cycle-app-bucket.s3.amazonaws.com/cycledata.js?nocache=' + Date.now();
+        const jsonpUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}&callback=${callbackName}`;
+
+        // הזרקה דינמית של תגית הסקריפט (JSONP)
+        const script = document.createElement('script');
+        script.id = 'jsonp-request-script';
+        script.src = jsonpUrl;
+        
+        script.onerror = function() {
+            useBackupMode();
+            cleanUp();
+        };
+
+        document.head.appendChild(script);
+
+        function cleanUp() {
+            if (script) script.remove();
+            delete window[callbackName];
+            refreshBtn.disabled = false;
+            refreshBtn.innerText = "🔄 רענן נתונים";
+        }
+    }
+
+    function useBackupMode() {
+        const statusDiv = document.getElementById('connectionStatus');
         currentMachinesList = backupData;
         statusDiv.innerText = "🟡 מצב מקומי (אופליין): מציג נתונים שמורים מראש (לא נרשם חיבור לשרת)";
         statusDiv.className = "status-bar status-backup";
         renderTable();
-        
-        refreshBtn.disabled = false;
-        refreshBtn.innerText = "🔄 רענן נתונים";
     }
 
     function renderTable() {
