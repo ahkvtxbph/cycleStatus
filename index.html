@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מערכת מיקומי מכונות מיחזור - מועצה אזורית שדות נגב</title>
+    <title>מערכת מיקומי מכונות מיחזור</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -173,7 +173,7 @@
                 <option value="KASHCASE">מכונת KASHCASE</option>
             </select>
 
-            <button id="refreshBtn" class="refresh-btn" onclick="loadLiveCycleData()">
+            <button id="refreshBtn" class="refresh-btn" onclick="fetchLiveData()">
                 🔄 רענן נתונים
             </button>
         </div>
@@ -215,8 +215,7 @@
 
     let currentMachinesList = [];
 
-    // טעינה ישירה לתוך אלמנט סקריפט - עוקף את חסימת ה-CORS לחלוטין
-    function loadLiveCycleData() {
+    async function fetchLiveData() {
         const statusDiv = document.getElementById('connectionStatus');
         const refreshBtn = document.getElementById('refreshBtn');
         
@@ -225,45 +224,47 @@
         refreshBtn.disabled = true;
         refreshBtn.innerText = "🔄 טוען...";
 
-        // הסרת סקריפט קודם למניעת כפילויות ברענון
-        const oldScript = document.getElementById('dynamic-cycle-script');
-        if (oldScript) oldScript.remove();
+        const targetUrl = 'https://cycle-app-bucket.s3.amazonaws.com/cycledata.js';
+        // שימוש בפרוקסי יציב שעוקף את ההגבלות של אמזון בצורה אמינה
+        const proxyUrl = `https://api.codetabs.com/v1/proxy?url=${encodeURIComponent(targetUrl)}&_=${Date.now()}`;
 
-        const script = document.createElement('script');
-        script.id = 'dynamic-cycle-script';
-        // הוספת סימן שאלה וזמן כדי למנוע Cache ישן בדפדפן
-        script.src = `https://cycle-app-bucket.s3.amazonaws.com/cycledata.js?v=${Date.now()}`;
-
-        script.onload = function() {
-            // בדיקה אם המשתנה הגלובלי מהקובץ המקורי נטען בהצלחה
-            if (typeof cycleData !== 'undefined' && Array.isArray(cycleData) && cycleData.length > 0) {
-                currentMachinesList = cycleData;
+        try {
+            const response = await fetch(proxyUrl);
+            if (!response.ok) throw new Error('Network error');
+            
+            let rawText = await response.text();
+            
+            // ניקוי עטיפת המשתנה "const cycleData =" והפיכתו ל-JSON טהור
+            rawText = rawText.replace(/^\s*const\s+cycleData\s*=/, '').trim();
+            if (rawText.endsWith(';')) {
+                rawText = rawText.slice(0, -1).trim();
+            }
+            
+            const liveData = JSON.parse(rawText);
+            
+            if (liveData && Array.isArray(liveData) && liveData.length > 0) {
+                currentMachinesList = liveData;
                 const now = new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'});
                 statusDiv.innerText = `🟢 מחובר בזמן אמת: הנתונים עודכנו משרת Cycle (עדכון אחרון: ${now})`;
                 statusDiv.className = "status-bar status-live";
                 renderTable();
-            } else {
-                runFallback();
+                
+                refreshBtn.disabled = false;
+                refreshBtn.innerText = "🔄 רענן נתונים";
+                return;
             }
-            refreshBtn.disabled = false;
-            refreshBtn.innerText = "🔄 רענן נתונים";
-        };
+        } catch (error) {
+            console.error("טעינת הנתונים החיים נכשלה:", error);
+        }
 
-        script.onerror = function() {
-            runFallback();
-            refreshBtn.disabled = false;
-            refreshBtn.innerText = "🔄 רענן נתונים";
-        };
-
-        document.body.appendChild(script);
-    }
-
-    function runFallback() {
-        const statusDiv = document.getElementById('connectionStatus');
+        // במקרה של כישלון, הפעלת נתוני הגיבוי המקומיים
         currentMachinesList = backupData;
         statusDiv.innerText = "🟡 מצב מקומי (אופליין): מציג נתונים שמורים מראש (לא נרשם חיבור לשרת)";
         statusDiv.className = "status-bar status-backup";
         renderTable();
+        
+        refreshBtn.disabled = false;
+        refreshBtn.innerText = "🔄 רענן נתונים";
     }
 
     function renderTable() {
@@ -333,9 +334,9 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        loadLiveCycleData();
-        // רענון אוטומטי שקוף ברקע בכל שעה עגולה (3600000 מילישניות)
-        setInterval(loadLiveCycleData, 3600000);
+        fetchLiveData();
+        // רענון אוטומטי מלא ברקע כל שעה עגולה
+        setInterval(fetchLiveData, 3600000);
     });
 </script>
 
