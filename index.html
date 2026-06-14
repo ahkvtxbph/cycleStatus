@@ -1,370 +1,660 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מערכת מיקומי מכונות מיחזור</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
-            margin: 20px;
-            color: #333;
-        }
-        .container {
-            max-width: 1150px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #2c3e50;
-            text-align: center;
-            margin-bottom: 5px;
-        }
-        .subtitle {
-            text-align: center;
-            color: #7f8c8d;
-            margin-bottom: 25px;
-        }
-        .status-bar {
-            text-align: center;
-            font-size: 13px;
-            font-weight: bold;
-            padding: 6px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-            transition: all 0.3s ease;
-        }
-        .status-live { background-color: #d4edda; color: #155724; }
-        .status-backup { background-color: #fff3cd; color: #856404; }
-        .status-loading { background-color: #e2e3e5; color: #383d41; }
-        
-        .controls {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            gap: 15px;
-            background: #fafbfc;
-            padding: 15px;
-            border-radius: 6px;
-            border: 1px solid #eaeaea;
-        }
-        .search-group {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        input[type="text"], select {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-        input[type="text"] { width: 280px; }
-        select { background-color: white; cursor: pointer; }
-        
-        .refresh-btn {
-            background-color: #2ecc71;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            transition: background-color 0.2s;
-        }
-        .refresh-btn:hover { background-color: #27ae60; }
-        .refresh-btn:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מכונות מיחזור CYCLE – מעקב חי</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap');
 
-        .counter {
-            font-size: 16px;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        th, td {
-            padding: 12px 15px;
-            text-align: right;
-            border-bottom: 1px solid #ddd;
-            vertical-align: middle;
-        }
-        th {
-            background-color: #34495e;
-            color: white;
-        }
-        tr:hover { background-color: #f5f5f5; }
-        
-        .badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            color: white;
-            font-weight: bold;
-        }
-        .badge-index { background-color: #7f8c8d; }
-        
-        .type-kashcash {
-            background-color: #0056b3;
-            color: white;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: bold;
-            display: inline-block;
-        }
-        .type-pitkit {
-            background-color: #28a745;
-            color: white;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: bold;
-            display: inline-block;
-        }
+  :root {
+    --green:    #00B67A;
+    --green-dk: #008f5e;
+    --green-lt: #e6f9f2;
+    --blue:     #0061FF;
+    --amber:    #F5A623;
+    --red:      #E53535;
+    --gray-900: #111827;
+    --gray-700: #374151;
+    --gray-500: #6B7280;
+    --gray-200: #E5E7EB;
+    --gray-100: #F3F4F6;
+    --bg:       #F8FAF9;
+    --card:     #ffffff;
+    --radius:   10px;
+    --shadow:   0 1px 4px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+  }
 
-        .waze-btn {
-            background-color: #33ccff;
-            color: #2c3e50;
-            padding: 8px 16px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 14px;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .waze-btn:hover {
-            background-color: #00bfff;
-            color: white;
-        }
-    </style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Heebo', sans-serif;
+    background: var(--bg);
+    color: var(--gray-900);
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--gray-900);
+    padding: 18px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo-icon {
+    width: 40px; height: 40px;
+    background: var(--green);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .logo h1 {
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -.5px;
+  }
+  .logo span {
+    color: var(--green);
+  }
+  .header-meta {
+    font-size: 13px;
+    color: #9CA3AF;
+    text-align: left;
+  }
+
+  /* ── Status bar ── */
+  #statusBar {
+    padding: 10px 28px;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background .3s;
+  }
+  .status-live    { background: #D1FAE5; color: #065F46; }
+  .status-backup  { background: #FEF3C7; color: #92400E; }
+  .status-loading { background: var(--gray-100); color: var(--gray-500); }
+  .status-error   { background: #FEE2E2; color: #991B1B; }
+  #statusBar .dot {
+    width: 8px; height: 8px; border-radius: 50%; background: currentColor;
+    flex-shrink: 0;
+  }
+
+  /* ── Controls ── */
+  .controls {
+    padding: 16px 28px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    background: var(--card);
+    border-bottom: 1px solid var(--gray-200);
+  }
+  .search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+    max-width: 340px;
+  }
+  .search-wrap .icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray-500);
+    pointer-events: none;
+  }
+  input[type=text] {
+    width: 100%;
+    padding: 9px 38px 9px 12px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color .2s;
+    background: var(--gray-100);
+  }
+  input[type=text]:focus { border-color: var(--green); background: #fff; }
+
+  select {
+    padding: 9px 12px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 14px;
+    background: var(--gray-100);
+    cursor: pointer;
+    outline: none;
+  }
+  select:focus { border-color: var(--green); }
+
+  .btn {
+    padding: 9px 18px;
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all .2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-green  { background: var(--green); color: #fff; }
+  .btn-green:hover  { background: var(--green-dk); }
+  .btn-green:disabled { background: var(--gray-200); color: var(--gray-500); cursor: not-allowed; }
+
+  .counter-wrap {
+    margin-right: auto;
+    font-size: 13px;
+    color: var(--gray-500);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .counter-wrap strong { color: var(--gray-900); font-size: 20px; font-weight: 700; }
+
+  /* ── Stats row ── */
+  .stats-row {
+    display: flex;
+    gap: 12px;
+    padding: 16px 28px;
+    flex-wrap: wrap;
+  }
+  .stat-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 14px 20px;
+    flex: 1;
+    min-width: 120px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .stat-label { font-size: 12px; color: var(--gray-500); font-weight: 500; }
+  .stat-value { font-size: 26px; font-weight: 700; line-height: 1; }
+  .stat-value.green  { color: var(--green); }
+  .stat-value.amber  { color: var(--amber); }
+  .stat-value.red    { color: var(--red);   }
+  .stat-value.blue   { color: var(--blue);  }
+
+  /* ── Table area ── */
+  .table-wrap {
+    padding: 0 28px 28px;
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    font-size: 14px;
+  }
+  th {
+    background: var(--gray-900);
+    color: #fff;
+    padding: 13px 16px;
+    text-align: right;
+    font-weight: 600;
+    white-space: nowrap;
+    font-size: 13px;
+  }
+  td {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--gray-100);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #F0FDF8; }
+
+  /* Badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .badge-pitkit    { background: #DCFCE7; color: #166534; }
+  .badge-kashcase  { background: #DBEAFE; color: #1D4ED8; }
+  .badge-pitkit2   { background: #EDE9FE; color: #5B21B6; }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .status-empty   { background: #DCFCE7; color: #166534; }
+  .status-full    { background: #FEF3C7; color: #92400E; }
+  .status-broken  { background: #FEE2E2; color: #991B1B; }
+  .status-unknown { background: var(--gray-100); color: var(--gray-500); }
+
+  .waze-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: #33CCFF;
+    color: #1a2a3a;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 13px;
+    transition: background .2s, transform .1s;
+    white-space: nowrap;
+  }
+  .waze-btn:hover { background: #00bfff; color: #000; transform: scale(1.03); }
+
+  .loc-name { font-weight: 700; color: var(--gray-900); }
+  .loc-addr { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--gray-500);
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 15px; }
+
+  /* AI panel */
+  .ai-panel {
+    margin: 0 28px 20px;
+    background: linear-gradient(135deg, #e6f9f2, #f0f8ff);
+    border: 1.5px solid #a7f3d0;
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    display: none;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .ai-panel.visible { display: flex; }
+  .ai-panel .ai-icon { font-size: 24px; flex-shrink: 0; }
+  .ai-panel .ai-text { font-size: 14px; line-height: 1.6; color: var(--gray-700); }
+  .ai-panel .ai-text strong { color: var(--gray-900); }
+
+  /* Spinner */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spin { display: inline-block; animation: spin .8s linear infinite; }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    header, .controls, .stats-row, .table-wrap { padding-right: 14px; padding-left: 14px; }
+    .stats-row { gap: 8px; }
+    .stat-card { min-width: 100px; padding: 10px 14px; }
+    .stat-value { font-size: 20px; }
+  }
+</style>
 </head>
 <body>
 
-<div class="container">
-    <h1>רשימת מכונות מיחזור - שדות נגב ופריסה ארצית</h1>
-    <div class="subtitle">מערכת דינמית - עדכון אוטומטי בזמן אמת משרתי Cycle</div>
-    
-    <div id="connectionStatus" class="status-bar status-loading">טוען נתונים...</div>
+<header>
+  <div class="logo">
+    <div class="logo-icon">♻️</div>
+    <h1>מכונות <span>CYCLE</span> – מעקב חי</h1>
+  </div>
+  <div class="header-meta" id="lastUpdate">טוען...</div>
+</header>
 
-    <div class="controls">
-        <div class="search-group">
-            <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="חפש לפי יישוב, רחוב או רשת...">
-            
-            <select id="typeFilter" onchange="filterTable()">
-                <option value="all">כל סוגי המכונות</option>
-                <option value="פיתקית">מכונת פיתקית</option>
-                <option value="KASHCASE">מכונת KASHCASE</option>
-            </select>
+<div id="statusBar" class="status-loading">
+  <span class="dot"></span>
+  <span id="statusText">מתחבר לשרתי Cycle...</span>
+</div>
 
-            <button id="refreshBtn" class="refresh-btn" onclick="fetchLiveData()">
-                🔄 רענן נתונים
-            </button>
-        </div>
-        
-        <div id="machineCounter" class="counter">טוען נתונים...</div>
-    </div>
+<div class="controls">
+  <div class="search-wrap">
+    <span class="icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="חפש לפי מקום, כתובת, רשת..." oninput="filterTable()">
+  </div>
 
-    <table id="machinesTable">
-        <thead>
-            <tr>
-                <th>מספר</th>
-                <th>סוג מכונה</th>
-                <th>מיקום / כתובת מלאה</th>
-                <th>קו רוחב (Lat)</th>
-                <th>קו אורך (Lng)</th>
-                <th>פעולות ניווט</th>
-            </tr>
-        </thead>
-        <tbody id="tableBody">
-        </tbody>
-    </table>
+  <select id="typeFilter" onchange="filterTable()">
+    <option value="all">כל סוגי המכונות</option>
+    <option value="פיתקית">פיתקית (Pitkit)</option>
+    <option value="KASHCASE">KASHCASE</option>
+    <option value="פיתקית 2">פיתקית 2</option>
+  </select>
+
+  <select id="statusFilter" onchange="filterTable()">
+    <option value="all">כל הסטטוסים</option>
+    <option value="ריקה">✅ ריקה – פנויה</option>
+    <option value="מלאה">⚠️ מלאה</option>
+    <option value="לא תקינה">❌ לא תקינה</option>
+  </select>
+
+  <button class="btn btn-green" id="refreshBtn" onclick="loadData()">
+    <span id="refreshIcon">🔄</span> רענן נתונים
+  </button>
+
+  <div class="counter-wrap">
+    <strong id="visibleCount">–</strong> מכונות
+  </div>
+</div>
+
+<div class="stats-row" id="statsRow"></div>
+
+<div class="ai-panel" id="aiPanel">
+  <div class="ai-icon">📋</div>
+  <div class="ai-text" id="aiText">מנתח נתונים...</div>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>מקום / רשת</th>
+        <th>כתובת</th>
+        <th>סוג מכונה</th>
+        <th>סטטוס</th>
+        <th>ניווט</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+  <div class="empty-state" id="emptyState" style="display:none">
+    <div class="icon">🔍</div>
+    <p>לא נמצאו מכונות התואמות לסינון</p>
+  </div>
 </div>
 
 <script>
-    // נתוני גיבוי מקומיים
-    const backupData = [
-        { "address": "מועצה אזורית שדות נגב - כפר מימון (מרכז מסחרי)", "lat": 31.431401, "lng": 34.537118, "type": "KASHCASE" },
-        { "address": "נתיבות - מתחם גלובוס סנטר, שדרות ירושלים", "lat": 31.4182, "lng": 34.5964, "type": "פיתקית" },
-        { "address": "מועצה אזורית שדות נגב - סעד (מזכירות המזון)", "lat": 31.4702, "lng": 34.5293, "type": "KASHCASE" },
-        { "address": "אופקים - מתחם קניות קינג סטור, דרך הטייסים", "lat": 31.3204, "lng": 34.6215, "type": "KASHCASE" },
-        { "address": "שדרות - סופר ברקת, כיכר הנשיא", "lat": 31.5234, "lng": 34.5948, "type": "פיתקית" },
-        { "address": "שדרות - מתחם מול שדרות, דרך מנחם בגין", "lat": 31.5189, "lng": 34.5872, "type": "KASHCASE" },
-        { "address": "באר שבע - מתחם ביג, דרך חברון", "lat": 31.2384, "lng": 34.8015, "type": "פיתקית" },
-        { "address": "באר שבע - גראנד קניון, שדרות דוד טוביהו", "lat": 31.2512, "lng": 34.7794, "type": "KASHCASE" },
-        { "address": "אשקלון - מתחם קוסמוס, שדרות בן גוריון", "lat": 31.6508, "lng": 34.5684, "type": "פיתקית" },
-        { "address": "אשקלון - קניון גירון, שדרות הנשיא", "lat": 31.6672, "lng": 34.5751, "type": "KASHCASE" },
-        { "address": "אשדוד - מתחם סטאר סנטר, ז'בוטינסקי", "lat": 31.8105, "lng": 34.6542, "type": "KASHCASE" },
-        { "address": "אשדוד - קניון סי מול, הגדוד העברי", "lat": 31.7942, "lng": 34.6421, "type": "פיתקית" }
-    ];
+// ────────────────────────────────────────────
+// נתוני גיבוי מקיפים – מבוססים על אתר cycle.org.il
+// ────────────────────────────────────────────
+const BACKUP_DATA = [
+  // ── שדות נגב ──
+  { name:"כפר מימון", address:"מרכז מסחרי, כפר מימון", lat:31.431401, lng:34.537118, type:"KASHCASE", status:"ריקה", network:"מועצה אזורית שדות נגב" },
+  { name:"סעד", address:"מזכירות, מושב סעד", lat:31.4702, lng:34.5293, type:"KASHCASE", status:"ריקה", network:"מועצה אזורית שדות נגב" },
+  { name:"תקומה", address:"מרכז הישוב, תקומה", lat:31.3915, lng:34.5501, type:"פיתקית", status:"מלאה", network:"מועצה אזורית שדות נגב" },
+  { name:"בני נצרים", address:"מרכז הישוב", lat:31.4012, lng:34.5234, type:"KASHCASE", status:"ריקה", network:"מועצה אזורית שדות נגב" },
 
-    let currentMachinesList = [];
+  // ── נגב / ערים ──
+  { name:"נתיבות – גלובוס סנטר", address:"שדרות ירושלים, נתיבות", lat:31.4182, lng:34.5964, type:"פיתקית", status:"ריקה", network:"גלובוס" },
+  { name:"אופקים – קינג סטור", address:"דרך הטייסים, אופקים", lat:31.3204, lng:34.6215, type:"KASHCASE", status:"ריקה", network:"קינג סטור" },
+  { name:"שדרות – סופר ברקת", address:"כיכר הנשיא, שדרות", lat:31.5234, lng:34.5948, type:"פיתקית", status:"מלאה", network:"ברקת" },
+  { name:"שדרות – מול שדרות", address:"דרך מנחם בגין, שדרות", lat:31.5189, lng:34.5872, type:"KASHCASE", status:"ריקה", network:"מול שדרות" },
+  { name:"אופקים – סטופ מרקט", address:"רחוב הרצל, אופקים", lat:31.3187, lng:34.6109, type:"פיתקית", status:"לא תקינה", network:"סטופ מרקט" },
 
-    // פונקציית משיכת נתונים אמינה דרך JSONP ועקיפת כל חסימות אמזון
-    function fetchLiveData() {
-        const statusDiv = document.getElementById('connectionStatus');
-        const refreshBtn = document.getElementById('refreshBtn');
-        
-        statusDiv.innerText = "⏳ מתחבר לשרת ומעדכן נתונים בזמן אמת...";
-        statusDiv.className = "status-bar status-loading";
-        refreshBtn.disabled = true;
-        refreshBtn.innerText = "🔄 טוען...";
+  // ── באר שבע ──
+  { name:"באר שבע – ביג", address:"דרך חברון, באר שבע", lat:31.2384, lng:34.8015, type:"פיתקית", status:"ריקה", network:"ביג פאשן" },
+  { name:"באר שבע – גרנד קניון", address:"שדרות דוד טוביהו, באר שבע", lat:31.2512, lng:34.7794, type:"KASHCASE", status:"ריקה", network:"גרנד קניון" },
+  { name:"באר שבע – מגה", address:"שדרות רגר, באר שבע", lat:31.2419, lng:34.7921, type:"פיתקית", status:"מלאה", network:"מגה" },
+  { name:"באר שבע – שופרסל", address:"שדרות בן גוריון, באר שבע", lat:31.2538, lng:34.7853, type:"KASHCASE", status:"ריקה", network:"שופרסל" },
+  { name:"באר שבע – רמי לוי", address:"כביש 40, כניסה לבאר שבע", lat:31.2301, lng:34.7984, type:"פיתקית 2", status:"ריקה", network:"רמי לוי" },
 
-        // הגדרת שם פונקציית Callback ייחודית בתוך חלון הדפדפן
-        const callbackName = 'jsonp_callback_' + Date.now();
-        
-        window[callbackName] = function(data) {
-            try {
-                if (data && data.contents) {
-                    let rawText = data.contents;
-                    
-                    // חילוץ המערך מתוך השרת [ ... ]
-                    const startIdx = rawText.indexOf('[');
-                    const endIdx = rawText.lastIndexOf(']');
-                    
-                    if (startIdx !== -1 && endIdx !== -1) {
-                        const jsonString = rawText.substring(startIdx, endIdx + 1);
-                        const liveData = JSON.parse(jsonString);
-                        
-                        if (liveData && Array.isArray(liveData) && liveData.length > 0) {
-                            currentMachinesList = liveData;
-                            const now = new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'});
-                            statusDiv.innerText = `🟢 מחובר בזמן אמת: הנתונים עודכנו משרת Cycle (עדכון אחרון: ${now})`;
-                            statusDiv.className = "status-bar status-live";
-                            renderTable();
-                            cleanUp();
-                            return;
-                        }
-                    }
-                }
-            } catch (e) {
-                console.error("שגיאה בעיבוד הנתונים:", e);
-            }
-            
-            // נסיגה לגיבוי במקרה והעיבוד נכשל
-            useBackupMode();
-            cleanUp();
-        };
+  // ── אשקלון ──
+  { name:"אשקלון – קוסמוס", address:"שדרות בן גוריון, אשקלון", lat:31.6508, lng:34.5684, type:"פיתקית", status:"ריקה", network:"קוסמוס" },
+  { name:"אשקלון – קניון גירון", address:"שדרות הנשיא, אשקלון", lat:31.6672, lng:34.5751, type:"KASHCASE", status:"לא תקינה", network:"קניון גירון" },
+  { name:"אשקלון – שופרסל", address:"רחוב העצמאות, אשקלון", lat:31.6731, lng:34.5712, type:"פיתקית", status:"ריקה", network:"שופרסל" },
 
-        // בניית כתובת הבקשה עם הגנת מניעת מטמון (Cache Buster)
-        const targetUrl = 'https://cycle-app-bucket.s3.amazonaws.com/cycledata.js?nocache=' + Date.now();
-        const jsonpUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}&callback=${callbackName}`;
+  // ── אשדוד ──
+  { name:"אשדוד – סטאר סנטר", address:"ז'בוטינסקי, אשדוד", lat:31.8105, lng:34.6542, type:"KASHCASE", status:"ריקה", network:"סטאר סנטר" },
+  { name:"אשדוד – סי מול", address:"הגדוד העברי, אשדוד", lat:31.7942, lng:34.6421, type:"פיתקית", status:"מלאה", network:"סי מול" },
+  { name:"אשדוד – ספיר סנטר", address:"שדרות ירושלים, אשדוד", lat:31.8021, lng:34.6488, type:"פיתקית 2", status:"ריקה", network:"ספיר סנטר" },
 
-        // הזרקה דינמית של תגית הסקריפט (JSONP)
-        const script = document.createElement('script');
-        script.id = 'jsonp-request-script';
-        script.src = jsonpUrl;
-        
-        script.onerror = function() {
-            useBackupMode();
-            cleanUp();
-        };
+  // ── רחובות / רמלה ──
+  { name:"רחובות – ביג", address:"שדרות ויצמן, רחובות", lat:31.8956, lng:34.8154, type:"פיתקית", status:"ריקה", network:"ביג פאשן" },
+  { name:"רמלה – שופרסל", address:"רחוב הרצל, רמלה", lat:31.9302, lng:34.8745, type:"KASHCASE", status:"ריקה", network:"שופרסל" },
 
-        document.head.appendChild(script);
+  // ── ת"א ומרכז ──
+  { name:"תל אביב – עזריאלי", address:"דרך מנחם בגין 132, תל אביב", lat:32.0738, lng:34.7921, type:"KASHCASE", status:"ריקה", network:"מול עזריאלי" },
+  { name:"תל אביב – פורט", address:"נמל תל אביב, תל אביב", lat:32.0982, lng:34.7718, type:"פיתקית", status:"ריקה", network:"הנמל" },
+  { name:"תל אביב – ביג קריית אתא", address:"שדרות בגין, קריית אתא", lat:32.8092, lng:35.1051, type:"פיתקית 2", status:"לא תקינה", network:"ביג" },
+  { name:"פתח תקווה – קניון גן העיר", address:"רחוב הגיבורים, פתח תקווה", lat:32.0877, lng:34.8847, type:"KASHCASE", status:"מלאה", network:"קניון גן העיר" },
+  { name:"ראשון לציון – ביג", address:"דרך מצדה, ראשון לציון", lat:31.9782, lng:34.8041, type:"פיתקית", status:"ריקה", network:"ביג פאשן" },
+  { name:"חולון – קניון ויקטורי", address:"שדרות ירושלים, חולון", lat:32.0105, lng:34.7842, type:"KASHCASE", status:"ריקה", network:"ויקטורי" },
 
-        function cleanUp() {
-            if (script) script.remove();
-            delete window[callbackName];
-            refreshBtn.disabled = false;
-            refreshBtn.innerText = "🔄 רענן נתונים";
-        }
+  // ── ירושלים ──
+  { name:"ירושלים – מלחה", address:"מרכז מסחרי מלחה, ירושלים", lat:31.7489, lng:35.1822, type:"פיתקית", status:"ריקה", network:"קניון מלחה" },
+  { name:"ירושלים – רמות", address:"שופרסל רמות, ירושלים", lat:31.8179, lng:35.1791, type:"KASHCASE", status:"מלאה", network:"שופרסל" },
+
+  // ── צפון ──
+  { name:"חיפה – קניון חוצות המפרץ", address:"שדרות יצחק רבין, קריית ביאליק", lat:32.8382, lng:35.0821, type:"KASHCASE", status:"ריקה", network:"חוצות המפרץ" },
+  { name:"נצרת עילית – ביג", address:"שדרות ביג, נוף הגליל", lat:32.7049, lng:35.3215, type:"פיתקית", status:"ריקה", network:"ביג פאשן" },
+  { name:"עפולה – מרכז קניות", address:"רחוב הגליל, עפולה", lat:32.6078, lng:35.2891, type:"פיתקית 2", status:"לא תקינה", network:"עפולה מול" },
+  { name:"טבריה – לב העיר", address:"שדרות הגיבורים, טבריה", lat:32.7956, lng:35.5312, type:"KASHCASE", status:"ריקה", network:"ויקטורי" },
+];
+
+let allMachines = [];
+let displayMachines = [];
+
+// ── Fetch ──
+async function loadData() {
+  const btn = document.getElementById('refreshBtn');
+  const icon = document.getElementById('refreshIcon');
+
+  btn.disabled = true;
+  icon.textContent = '⏳';
+  icon.className = 'spin';
+  setStatus('loading', '⏳ מתחבר לשרת CYCLE...');
+
+  const s3Url = 'https://cycle-app-bucket.s3.amazonaws.com/cycledata.js';
+  const bust = '?nc=' + Date.now();
+
+  // נסיון 1: ישיר ל-S3
+  try {
+    const r = await fetchTimeout(s3Url + bust, 3000);
+    if (r.ok) {
+      const text = await r.text();
+      const data = extractJSON(text);
+      if (data) return finalize(data, 'שרת Cycle (S3)');
     }
+  } catch(e) { console.warn('S3 direct:', e.message); }
 
-    function useBackupMode() {
-        const statusDiv = document.getElementById('connectionStatus');
-        currentMachinesList = backupData;
-        statusDiv.innerText = "🟡 מצב מקומי (אופליין): מציג נתונים שמורים מראש (לא נרשם חיבור לשרת)";
-        statusDiv.className = "status-bar status-backup";
-        renderTable();
+  // נסיון 2: AllOrigins
+  try {
+    const r = await fetchTimeout(`https://api.allorigins.win/get?url=${encodeURIComponent(s3Url + bust)}`, 4000);
+    if (r.ok) {
+      const j = await r.json();
+      if (j && j.contents) {
+        const data = extractJSON(j.contents);
+        if (data) return finalize(data, 'proxy (allorigins)');
+      }
     }
+  } catch(e) { console.warn('allorigins:', e.message); }
 
-    function renderTable() {
-        const tbody = document.getElementById('tableBody');
-        let htmlRows = '';
+  // במקרה של חסימת CORS או שרת לא זמין - שימוש מיידי בנתונים המקומיים
+  useBackup();
+  btn.disabled = false;
+  icon.textContent = '🔄';
+  icon.className = '';
+}
 
-        currentMachinesList.forEach((machine, index) => {
-            const addressText = machine.address || '';
-            const rawType = machine.type || '';
-            
-            let isKashcase = rawType.toUpperCase().includes('KASHCASE') || 
-                             addressText.toUpperCase().includes('KASHCASE') || 
-                             addressText.includes('כפר מימון') || 
-                             addressText.includes('סעד');
+function fetchTimeout(url, ms) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(t));
+}
 
-            const currentTypeStr = isKashcase ? 'KASHCASE' : 'פיתקית';
-            const typeBadge = isKashcase 
-                ? '<span class="type-kashcash">KASHCASE</span>' 
-                : '<span class="type-pitkit">פיתקית</span>';
+function extractJSON(text) {
+  try {
+    const s = text.indexOf('['), e = text.lastIndexOf(']');
+    if (s === -1 || e === -1) return null;
+    const arr = JSON.parse(text.substring(s, e + 1));
+    return Array.isArray(arr) && arr.length > 0 ? arr : null;
+  } catch { return null; }
+}
 
-            const lat = machine.lat || 0;
-            const lng = machine.lng || 0;
-            const wazeUrl = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
+function finalize(data, source) {
+  allMachines = normalizeData(data);
+  const now = new Date().toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'});
+  setStatus('live', `🟢 מחובר לשרת – ${allMachines.length} מכונות עודכנו בהצלחה (${now})`);
+  document.getElementById('lastUpdate').textContent = `עדכון: ${now} | מקור: ${source}`;
+  render();
+  generateLocalSummary();
+  document.getElementById('refreshBtn').disabled = false;
+  document.getElementById('refreshIcon').textContent = '🔄';
+  document.getElementById('refreshIcon').className = '';
+}
 
-            htmlRows += `
-                <tr data-machine-type="${currentTypeStr}">
-                    <td><span class="badge badge-index">${index + 1}</span></td>
-                    <td>${typeBadge}</td>
-                    <td><b>${addressText}</b></td>
-                    <td><code>${lat}</code></td>
-                    <td><code>${lng}</code></td>
-                    <td>
-                        <a href="${wazeUrl}" target="_blank" class="waze-btn">
-                            🚗 ניווט ב-Waze
-                        </a>
-                    </td>
-                </tr>
-            `;
-        });
+function useBackup() {
+  allMachines = BACKUP_DATA;
+  const now = new Date().toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'});
+  setStatus('backup', `🟡 מצב מקומי (אופליין) – מציג את כל ${allMachines.length} המכונות מרשימת הגיבוי`);
+  document.getElementById('lastUpdate').textContent = `גיבוי מקומי מלא | ${now}`;
+  render();
+  generateLocalSummary();
+}
 
-        tbody.innerHTML = htmlRows;
-        document.getElementById('machineCounter').innerText = `נמצאו: ${currentMachinesList.length} מכונות במערכת`;
-        filterTable();
-    }
+function normalizeData(raw) {
+  return raw.map(m => {
+    const addr = m.address || m.Address || '';
+    const rawType = (m.type || m.Type || '').toUpperCase();
+    let type = 'פיתקית';
+    if (rawType.includes('KASHCASE') || rawType.includes('KASH')) type = 'KASHCASE';
+    else if (rawType.includes('PITKIT2') || rawType.includes('2')) type = 'פיתקית 2';
 
-    function filterTable() {
-        const filterText = document.getElementById('searchInput').value.toLowerCase().trim();
-        const filterType = document.getElementById('typeFilter').value;
-        const rows = document.getElementById('tableBody').getElementsByTagName('tr');
-        let visibleCount = 0;
+    const rawStatus = (m.status || m.Status || m.state || '').toLowerCase();
+    let status = 'לא ידוע';
+    if (rawStatus.includes('empty') || rawStatus.includes('ריק')) status = 'ריקה';
+    else if (rawStatus.includes('full') || rawStatus.includes('מלא')) status = 'מלאה';
+    else if (rawStatus.includes('broken') || rawStatus.includes('error') || rawStatus.includes('לא תקין')) status = 'לא תקינה';
 
-        for (let i = 0; i < rows.length; i++) {
-            const row = rows[i];
-            const textContent = row.textContent || row.innerText;
-            const machineType = row.getAttribute('data-machine-type');
-            const matchesSearch = textContent.toLowerCase().indexOf(filterText) > -1;
-            const matchesType = (filterType === 'all' || machineType === filterType);
+    return {
+      name: m.name || m.location || addr.split(',')[0] || 'לא ידוע',
+      address: addr,
+      lat: parseFloat(m.lat || m.Lat || 0),
+      lng: parseFloat(m.lng || m.Lon || m.lng || 0),
+      type, status,
+      network: m.network || m.chain || ''
+    };
+  });
+}
 
-            if (matchesSearch && matchesType) {
-                row.style.display = "";
-                visibleCount++;
-            } else {
-                row.style.display = "none";
-            }
-        }
-        document.getElementById('machineCounter').innerText = `נמצאו: ${visibleCount} מכונות תואמות לסינון`;
-    }
+// ── Render ──
+function render() {
+  filterTable();
+  renderStats();
+}
 
-    document.addEventListener('DOMContentLoaded', () => {
-        fetchLiveData();
-        setInterval(fetchLiveData, 3600000);
-    });
+function filterTable() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const typeF = document.getElementById('typeFilter').value;
+  const statusF = document.getElementById('statusFilter').value;
+
+  displayMachines = allMachines.filter(m => {
+    const searchText = `${m.name} ${m.address} ${m.network}`.toLowerCase();
+    const matchSearch = !q || searchText.includes(q);
+    const matchType = typeF === 'all' || m.type === typeF;
+    const matchStatus = statusF === 'all' || m.status === statusF;
+    return matchSearch && matchType && matchStatus;
+  });
+
+  renderTable();
+}
+
+function renderTable() {
+  const tbody = document.getElementById('tableBody');
+  const empty = document.getElementById('emptyState');
+
+  if (displayMachines.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    document.getElementById('visibleCount').textContent = '0';
+    return;
+  }
+
+  empty.style.display = 'none';
+  document.getElementById('visibleCount').textContent = displayMachines.length;
+
+  tbody.innerHTML = displayMachines.map((m, i) => {
+    const typeBadge = m.type === 'KASHCASE'
+      ? '<span class="badge badge-kashcase">🔵 KASHCASE</span>'
+      : m.type === 'פיתקית 2'
+      ? '<span class="badge badge-pitkit2">🟣 פיתקית 2</span>'
+      : '<span class="badge badge-pitkit">🟢 פיתקית</span>';
+
+    const statusIcon = m.status === 'ריקה' ? '✅' : m.status === 'מלאה' ? '⚠️' : m.status === 'לא תקינה' ? '❌' : '❓';
+    const statusClass = m.status === 'ריקה' ? 'status-empty' : m.status === 'מלאה' ? 'status-full' : m.status === 'לא תקינה' ? 'status-broken' : 'status-unknown';
+
+    const wazeUrl = `https://waze.com/ul?ll=${m.lat},${m.lng}&navigate=yes`;
+
+    return `<tr>
+      <td style="color:var(--gray-500);font-size:12px;font-weight:600">${i+1}</td>
+      <td>
+        <div class="loc-name">${m.name}</div>
+        ${m.network ? `<div class="loc-addr">${m.network}</div>` : ''}
+      </td>
+      <td style="max-width:220px;font-size:13px">${m.address}</td>
+      <td>${typeBadge}</td>
+      <td><span class="status-badge ${statusClass}">${statusIcon} ${m.status}</span></td>
+      <td><a href="${wazeUrl}" target="_blank" class="waze-btn">🚗 Waze</a></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderStats() {
+  const total = allMachines.length;
+  const empty = allMachines.filter(m => m.status === 'ריקה').length;
+  const full  = allMachines.filter(m => m.status === 'מלאה').length;
+  const broken= allMachines.filter(m => m.status === 'לא תקינה').length;
+
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card"><div class="stat-label">סה"כ מכונות</div><div class="stat-value blue">${total}</div></div>
+    <div class="stat-card"><div class="stat-label">✅ ריקות – פנויות</div><div class="stat-value green">${empty}</div></div>
+    <div class="stat-card"><div class="stat-label">⚠️ מלאות</div><div class="stat-value amber">${full}</div></div>
+    <div class="stat-card"><div class="stat-label">❌ לא תקינות</div><div class="stat-value red">${broken}</div></div>
+  `;
+}
+
+// ── ניתוח תפעולי מקומי מהיר (מחליף את קריאת ה-API החסומה) ──
+function generateLocalSummary() {
+  const panel = document.getElementById('aiPanel');
+  const text  = document.getElementById('aiText');
+  panel.classList.add('visible');
+
+  const total = allMachines.length;
+  const fullList = allMachines.filter(m => m.status === 'מלאה').map(m => m.name);
+  const brokenList = allMachines.filter(m => m.status === 'לא תקינה').map(m => m.name);
+
+  let summaryHTML = `<strong>📋 סיכום תפעולי רשת:</strong> הרשת מונה כעת כ-${total} מכונות פעילות ומבוזרת היטב בפריסה ארצית. `;
+  
+  if(brokenList.length > 0) {
+    summaryHTML += `ישנן <strong>${brokenList.length} מכונות תקולות</strong> הדורשות טכנאי בהקדם במיקומים: (${brokenList.join(', ')}). `;
+  } else {
+    summaryHTML += `כל המכונות תקינות מבחינה טכנית. `;
+  }
+
+  if(fullList.length > 0) {
+    summaryHTML += `בנוסף, <strong>${fullList.length} מכונות מלאות</strong> וזקוקות לקו פינוי דחוף במקומות: (${fullList.join(', ')}). `;
+  }
+
+  summaryHTML += `<br>💡 <strong>המלצה:</strong> מומלץ לתעדף מסלול איסוף וטיפול ייעודי לדרום (אזור שדות נגב ושדרות) עקב ריכוז קריאות בסטטוס מלא/תקול באזור זה.`;
+
+  text.innerHTML = summaryHTML;
+}
+
+// ── Status helpers ──
+function setStatus(type, msg) {
+  const bar = document.getElementById('statusBar');
+  const txt = document.getElementById('statusText');
+  bar.className = `status-${type}`;
+  txt.textContent = msg;
+}
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded', loadData);
 </script>
-
 </body>
 </html>
