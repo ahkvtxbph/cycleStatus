@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מערכת מיקומי מכונות מיחזור</title>
+    <title>מערכת מיקומי מכונות מיחזור - מועצה אזורית שדות נגב</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -225,39 +225,42 @@
         refreshBtn.innerText = "🔄 טוען...";
 
         const targetUrl = 'https://cycle-app-bucket.s3.amazonaws.com/cycledata.js';
-        // שימוש בפרוקסי יציב שעוקף את ההגבלות של אמזון בצורה אמינה
-        const proxyUrl = `https://api.codetabs.com/v1/proxy?url=${encodeURIComponent(targetUrl)}&_=${Date.now()}`;
+        // שימוש בפרוקסי אמין ומקצועי לעקיפת החסימה באמזון
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}&_=${Date.now()}`;
 
         try {
             const response = await fetch(proxyUrl);
-            if (!response.ok) throw new Error('Network error');
+            if (!response.ok) throw new Error('Proxy network error');
             
-            let rawText = await response.text();
+            const jsonWrapper = await response.json();
+            let rawText = jsonWrapper.contents; // קבלת הטקסט הגולמי של הקובץ מהפרוקסי
             
-            // ניקוי עטיפת המשתנה "const cycleData =" והפיכתו ל-JSON טהור
-            rawText = rawText.replace(/^\s*const\s+cycleData\s*=/, '').trim();
-            if (rawText.endsWith(';')) {
-                rawText = rawText.slice(0, -1).trim();
-            }
-            
-            const liveData = JSON.parse(rawText);
-            
-            if (liveData && Array.isArray(liveData) && liveData.length > 0) {
-                currentMachinesList = liveData;
-                const now = new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'});
-                statusDiv.innerText = `🟢 מחובר בזמן אמת: הנתונים עודכנו משרת Cycle (עדכון אחרון: ${now})`;
-                statusDiv.className = "status-bar status-live";
-                renderTable();
+            if (rawText) {
+                // ניקוי עטיפת המשתנה "const cycleData =" והפיכת המחרוזת ל-JSON טהור
+                rawText = rawText.replace(/^\s*const\s+cycleData\s*=/, '').trim();
+                if (rawText.endsWith(';')) {
+                    rawText = rawText.slice(0, -1).trim();
+                }
                 
-                refreshBtn.disabled = false;
-                refreshBtn.innerText = "🔄 רענן נתונים";
-                return;
+                const liveData = JSON.parse(rawText);
+                
+                if (liveData && Array.isArray(liveData) && liveData.length > 0) {
+                    currentMachinesList = liveData;
+                    const now = new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'});
+                    statusDiv.innerText = `🟢 מחובר בזמן אמת: הנתונים עודכנו משרת Cycle (עדכון אחרון: ${now})`;
+                    statusDiv.className = "status-bar status-live";
+                    renderTable();
+                    
+                    refreshBtn.disabled = false;
+                    refreshBtn.innerText = "🔄 רענן נתונים";
+                    return;
+                }
             }
         } catch (error) {
-            console.error("טעינת הנתונים החיים נכשלה:", error);
+            console.error("טעינת הנתונים החיים נכשלה, עובר למצב מקומי:", error);
         }
 
-        // במקרה של כישלון, הפעלת נתוני הגיבוי המקומיים
+        // במקרה של כישלון (למשל בעיית רשת זמנית), הפעלת נתוני הגיבוי המקומיים
         currentMachinesList = backupData;
         statusDiv.innerText = "🟡 מצב מקומי (אופליין): מציג נתונים שמורים מראש (לא נרשם חיבור לשרת)";
         statusDiv.className = "status-bar status-backup";
@@ -335,7 +338,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         fetchLiveData();
-        // רענון אוטומטי מלא ברקע כל שעה עגולה
+        // רענון אוטומטי מלא ברקע כל שעה עגולה (3600000 מילישניות)
         setInterval(fetchLiveData, 3600000);
     });
 </script>
