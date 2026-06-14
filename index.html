@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מערכת מיקומי מכונות מיחזור - מועצה אזורית שדות נגב</title>
+    <title>מערכת מיקומי מכונות מיחזור</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -173,7 +173,7 @@
                 <option value="KASHCASE">מכונת KASHCASE</option>
             </select>
 
-            <button id="refreshBtn" class="refresh-btn" onclick="fetchLiveData()">
+            <button id="refreshBtn" class="refresh-btn" onclick="loadDataDirectly()">
                 🔄 רענן נתונים
             </button>
         </div>
@@ -215,56 +215,57 @@
 
     let currentMachinesList = [];
 
-    async function fetchLiveData() {
+    // פונקציית הטעינה הישירה והבטוחה ביותר - עוקפת CORS מובנית של הדפדפן
+    function loadDataDirectly() {
         const statusDiv = document.getElementById('connectionStatus');
         const refreshBtn = document.getElementById('refreshBtn');
         
-        statusDiv.innerText = "⏳ מתחבר לשרת ומעדכן נתונים בזמן אמת...";
+        statusDiv.innerText = "⏳ מושך נתונים חיים ישירות משרתי אמזון...";
         statusDiv.className = "status-bar status-loading";
         refreshBtn.disabled = true;
         refreshBtn.innerText = "🔄 טוען...";
 
-        // שימוש בפרוקסי יציב, פתוח לחלוטין וללא שום הגבלות CORS
-        const targetUrl = 'https://cycle-app-bucket.s3.amazonaws.com/cycledata.js';
-        const proxyUrl = `https://api.codetabs.com/v1/proxy?url=${encodeURIComponent(targetUrl)}&_=${Date.now()}`;
+        // ניקוי תגיות ישנות כדי לא להעמיס ברענונים
+        const oldScript = document.getElementById('cycle-live-script');
+        if (oldScript) oldScript.remove();
 
-        try {
-            const response = await fetch(proxyUrl);
-            if (!response.ok) throw new Error('Network error');
-            
-            let rawText = await response.text();
-            
-            // ניקוי יסודי של עטיפת המשתנה מהקובץ המקורי של Cycle כדי להפוך אותו ל-JSON תקין
-            rawText = rawText.replace(/^\s*const\s+cycleData\s*=/, '').trim();
-            if (rawText.endsWith(';')) {
-                rawText = rawText.slice(0, -1).trim();
-            }
-            
-            const liveData = JSON.parse(rawText);
-            
-            if (liveData && liveData.length > 0) {
-                currentMachinesList = liveData;
+        // יצירת אלמנט סקריפט דינמי שמוריד את הקובץ המקורי ללא מגבלות דומיין
+        const script = document.createElement('script');
+        script.id = 'cycle-live-script';
+        // הוספת חותם זמן למניעת זיכרון מטמון (Cache) ישן
+        script.src = `https://cycle-app-bucket.s3.amazonaws.com/cycledata.js?_=${Date.now()}`;
+
+        // כשהקובץ יורד בהצלחה, הדפדפן מריץ אותו ומייצר משתנה גלובלי בשם cycleData
+        script.onload = function() {
+            if (typeof cycleData !== 'undefined' && cycleData.length > 0) {
+                currentMachinesList = cycleData;
                 const now = new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'});
                 statusDiv.innerText = `🟢 מחובר בזמן אמת: הנתונים עודכנו משרת Cycle (עדכון אחרון: ${now})`;
                 statusDiv.className = "status-bar status-live";
                 renderTable();
-                
-                refreshBtn.disabled = false;
-                refreshBtn.innerText = "🔄 רענן נתונים";
-                return;
+            } else {
+                useFallbackData();
             }
-        } catch (error) {
-            console.error("טעינה חיה נכשלה, עובר למצב מקומי:", error);
-        }
+            refreshBtn.disabled = false;
+            refreshBtn.innerText = "🔄 רענן נתונים";
+        };
 
-        // הפעלה במצב אופליין/גיבוי אם כל השאר נכשל
+        // במקרה קיצון של שגיאת רשת מלאה
+        script.onerror = function() {
+            useFallbackData();
+            refreshBtn.disabled = false;
+            refreshBtn.innerText = "🔄 רענן נתונים";
+        };
+
+        document.body.appendChild(script);
+    }
+
+    function useFallbackData() {
+        const statusDiv = document.getElementById('connectionStatus');
         currentMachinesList = backupData;
         statusDiv.innerText = "🟡 מצב מקומי (אופליין): מציג נתונים שמורים מראש (לא נרשם חיבור לשרת)";
         statusDiv.className = "status-bar status-backup";
         renderTable();
-        
-        refreshBtn.disabled = false;
-        refreshBtn.innerText = "🔄 רענן נתונים";
     }
 
     function renderTable() {
@@ -334,9 +335,9 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        fetchLiveData();
-        // רענון אוטומטי מלא כל שעה עגולה ברקע
-        setInterval(fetchLiveData, 3600000);
+        loadDataDirectly();
+        // עדכון אוטומטי מלא ברקע כל שעה עגולה (3600000 מילישניות)
+        setInterval(loadDataDirectly, 3600000);
     });
 </script>
 
