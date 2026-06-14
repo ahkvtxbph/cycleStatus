@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מערכת מיקומי מכונות מיחזור</title>
+    <title>מערכת מיקומי מכונות מיחזור - מועצה אזורית שדות נגב</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -173,7 +173,7 @@
                 <option value="KASHCASE">מכונת KASHCASE</option>
             </select>
 
-            <button id="refreshBtn" class="refresh-btn" onclick="loadDataDirectly()">
+            <button id="refreshBtn" class="refresh-btn" onclick="loadLiveCycleData()">
                 🔄 רענן נתונים
             </button>
         </div>
@@ -215,44 +215,42 @@
 
     let currentMachinesList = [];
 
-    // פונקציית הטעינה הישירה והבטוחה ביותר - עוקפת CORS מובנית של הדפדפן
-    function loadDataDirectly() {
+    // טעינה ישירה לתוך אלמנט סקריפט - עוקף את חסימת ה-CORS לחלוטין
+    function loadLiveCycleData() {
         const statusDiv = document.getElementById('connectionStatus');
         const refreshBtn = document.getElementById('refreshBtn');
         
-        statusDiv.innerText = "⏳ מושך נתונים חיים ישירות משרתי אמזון...";
+        statusDiv.innerText = "⏳ מתחבר לשרת ומעדכן נתונים בזמן אמת...";
         statusDiv.className = "status-bar status-loading";
         refreshBtn.disabled = true;
         refreshBtn.innerText = "🔄 טוען...";
 
-        // ניקוי תגיות ישנות כדי לא להעמיס ברענונים
-        const oldScript = document.getElementById('cycle-live-script');
+        // הסרת סקריפט קודם למניעת כפילויות ברענון
+        const oldScript = document.getElementById('dynamic-cycle-script');
         if (oldScript) oldScript.remove();
 
-        // יצירת אלמנט סקריפט דינמי שמוריד את הקובץ המקורי ללא מגבלות דומיין
         const script = document.createElement('script');
-        script.id = 'cycle-live-script';
-        // הוספת חותם זמן למניעת זיכרון מטמון (Cache) ישן
-        script.src = `https://cycle-app-bucket.s3.amazonaws.com/cycledata.js?_=${Date.now()}`;
+        script.id = 'dynamic-cycle-script';
+        // הוספת סימן שאלה וזמן כדי למנוע Cache ישן בדפדפן
+        script.src = `https://cycle-app-bucket.s3.amazonaws.com/cycledata.js?v=${Date.now()}`;
 
-        // כשהקובץ יורד בהצלחה, הדפדפן מריץ אותו ומייצר משתנה גלובלי בשם cycleData
         script.onload = function() {
-            if (typeof cycleData !== 'undefined' && cycleData.length > 0) {
+            // בדיקה אם המשתנה הגלובלי מהקובץ המקורי נטען בהצלחה
+            if (typeof cycleData !== 'undefined' && Array.isArray(cycleData) && cycleData.length > 0) {
                 currentMachinesList = cycleData;
                 const now = new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'});
                 statusDiv.innerText = `🟢 מחובר בזמן אמת: הנתונים עודכנו משרת Cycle (עדכון אחרון: ${now})`;
                 statusDiv.className = "status-bar status-live";
                 renderTable();
             } else {
-                useFallbackData();
+                runFallback();
             }
             refreshBtn.disabled = false;
             refreshBtn.innerText = "🔄 רענן נתונים";
         };
 
-        // במקרה קיצון של שגיאת רשת מלאה
         script.onerror = function() {
-            useFallbackData();
+            runFallback();
             refreshBtn.disabled = false;
             refreshBtn.innerText = "🔄 רענן נתונים";
         };
@@ -260,7 +258,7 @@
         document.body.appendChild(script);
     }
 
-    function useFallbackData() {
+    function runFallback() {
         const statusDiv = document.getElementById('connectionStatus');
         currentMachinesList = backupData;
         statusDiv.innerText = "🟡 מצב מקומי (אופליין): מציג נתונים שמורים מראש (לא נרשם חיבור לשרת)";
@@ -335,9 +333,9 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        loadDataDirectly();
-        // עדכון אוטומטי מלא ברקע כל שעה עגולה (3600000 מילישניות)
-        setInterval(loadDataDirectly, 3600000);
+        loadLiveCycleData();
+        // רענון אוטומטי שקוף ברקע בכל שעה עגולה (3600000 מילישניות)
+        setInterval(loadLiveCycleData, 3600000);
     });
 </script>
 
