@@ -371,7 +371,7 @@
   </table>
   <div class="empty-state" id="emptyState" style="display:none">
     <div class="icon">🔍</div>
-    <p>לאמצאו מכונות באזור או בסינון שנבחרו</p>
+    <p>לא נמצאו מכונות באזור או בסינון שנבחרו</p>
   </div>
 </div>
 
@@ -473,7 +473,7 @@ const BACKUP_DATA = [
   { name:"עכו – קניון עזריאלי עכו", address:"רחוב שלום הגליל, עכו", lat:32.9264, lng:35.0841, type:"KASHCASE", status:"ריקה", network:"עזריאלי" },
   { name:"נהריה – קניון ארנה", address:"שדרות בן צבי, נהריה", lat:32.9964, lng:35.0991, type:"פיתקית", status:"ריקה", network:"ארנה" },
   { name:"ראש פינה – סנטר הגליל", address:"דרך חצור, ראש פינה", lat:32.9712, lng:35.5421, type:"פיתקית", status:"ריקה", network:"שופרסל" },
-  { name:"קרית שמונה – ביג נחמיה", address:"שדרות תל חי, קרית שמונה", lat:33.2084, lng:35.5714, type:"מלאה", network:"ביג" }
+  { name:"קרית שמונה – ביג נחמיה", address:"שדרות תל חי, קרית שמונה", lat:33.2084, lng:35.5714, type:"KASHCASE", status:"מלאה", network:"ביג" }
 ];
 
 let allMachines = [];
@@ -520,7 +520,6 @@ async function loadData() {
     }
   } catch(e) { console.warn('Proxy method failed:', e.message); }
 
-  // במקרה של חסימת רשת או CORS - עובר מיידית ומציג את הגיבוי בלי להתקוע
   useBackup();
   cleanupBtn();
 }
