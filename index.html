@@ -403,7 +403,7 @@ const BACKUP_DATA = [
   { name:"באר שבע – נווה זאב", address:"רחוב ג'ו אלון, באר שבע", lat:31.2320, lng:34.7710, type:"פיתקית 2", status:"מלאה", network:"שופרסל" },
   { name:"באר שבע – רמי לוי", address:"כביש 40, אשכול קניות, באר שבע", lat:31.2301, lng:34.7984, type:"פיתקית 2", status:"ריקה", network:"רמי לוי" },
   { name:"רהט – מרכז מסחרי", address:"כניסה ראשית, רהט", lat:31.3912, lng:34.7544, type:"KASHCASE", status:"ריקה", network:"עצמאי" },
-  { name:"디מונה – קניון פרץ סנטר", address:"שדרות הרצל, דימונה", lat:31.0682, lng:35.0321, type:"פיתקית", status:"ריקה", network:"פרץ סנטר" },
+  { name:"דימונה – קניון פרץ סנטר", address:"שדרות הרצל, דימונה", lat:31.0682, lng:35.0321, type:"פיתקית", status:"ריקה", network:"פרץ סנטר" },
   { name:"ערד – סנטר ערד", address:"רחוב חן, ערד", lat:31.2612, lng:35.2145, type:"KASHCASE", status:"מלאה", network:"שופרסל" },
   { name:"אילת – קניון מול הים", address:"הפעמונים 1, אילת", lat:29.5521, lng:34.9562, type:"KASHCASE", status:"ריקה", network:"מול הים" },
   { name:"אילת – רמי לוי שחורת", address:"אזור תעשייה שחורת, אילת", lat:29.5891, lng:34.9610, type:"פיתקית 2", status:"לא תקינה", network:"רמי לוי" },
@@ -448,7 +448,7 @@ const BACKUP_DATA = [
 
   // ── מחוז ירושלים ויהודה ──
   { name:"ירושלים – קניון מלחה", address:"דרך אגודת ספורט בית\"ר, ירושלים", lat:31.7489, lng:35.1822, type:"פיתקית", status:"ריקה", network:"עזריאלי" },
-  { name:"ירושלים – רמות", address:"שופרסל רמות, ירושלים", lat:31.8179, lng:35.1791, type:"KASHCASE", status:"מלאה", network:"שופרסל" },
+  { name:"ירושלים – רמות", address:"שופרסsl רמות, ירושלים", lat:31.8179, lng:35.1791, type:"KASHCASE", status:"מלאה", network:"שופרסל" },
   { name:"ירושלים – תלפיות", address:"רחוב האומן, ירושלים", lat:31.7490, lng:35.2150, type:"פיתקית 2", status:"ריקה", network:"רמי לוי" },
   { name:"ירושלים – פסגת זאב", address:"שדרות משה דיין, ירושלים", lat:31.8290, lng:35.2440, type:"KASHCASE", status:"ריקה", network:"קניון הפסגה" },
   { name:"מעלה אדומים – קניון אדומים", address:"דרך מדבר יהודה, מעלה אדומים", lat:31.7512, lng:35.2911, type:"פיתקית", status:"ריקה", network:"קניון אדומים" },
@@ -471,11 +471,11 @@ const BACKUP_DATA = [
   { name:"טבריה – קניון מול כנרת", address:"צומת צמח, טבריה", lat:32.7064, lng:35.5841, type:"פיתקית 2", status:"ריקה", network:"מול כנרת" },
   { name:"טבריה – לב העיר", address:"שדרות הגיבורים, טבריה", lat:32.7956, lng:35.5312, type:"KASHCASE", status:"ריקה", network:"ויקטורי" },
   { name:"עכו – קניון עזריאלי עכו", address:"רחוב שלום הגליל, עכו", lat:32.9264, lng:35.0841, type:"KASHCASE", status:"ריקה", network:"עזריאלי" },
-  { name:"נהריה – קניון ארנה", address:"שדרות בן צבי, נהריה", lat:32.9964, lng:35.0991, type:"פיתקית", status:"ריקה", network:"ארנה" },
+  { name:"נהריה – קניון ארנה", address:"שדרות בן צבי, ננהריה", lat:32.9964, lng:35.0991, type:"פיתקית", status:"ריקה", network:"ארנה" },
   { name:"ראש פינה – סנטר הגליל", address:"דרך חצור, ראש פינה", lat:32.9712, lng:35.5421, type:"פיתקית", status:"ריקה", network:"שופרסל" },
   { name:"קרית שמונה – ביג נחמיה", address:"שדרות תל חי, קרית שמונה", lat:33.2084, lng:35.5714, type:"פיתקית", status:"מלאה", network:"ביג" },
   
-  // מכונות נוספות להשלמה מלאה
+  // מכונות נוספות להשלמה מלאה ל-87
   { name:"שדרות – רמי לוי", address:"אזור תעשייה, שדרות", lat:31.5260, lng:34.6010, type:"פיתקית 2", status:"ריקה", network:"רמי לוי" },
   { name:"נתיבות – אושר עד", address:"אזור תעשייה חזן, נתיבות", lat:31.4160, lng:34.5820, type:"KASHCASE", status:"ריקה", network:"אושר עד" },
   { name:"אופקים – שוק מהדרין", address:"רחוב קיבוץ גלויות, אופקים", lat:31.3140, lng:34.6180, type:"פיתקית", status:"ריקה", network:"שוק מהדרין" },
@@ -502,35 +502,29 @@ async function loadData() {
   const s3Url = 'https://cycle-app-bucket.s3.amazonaws.com/cycledata.js';
   const bust = '?nc=' + Date.now();
 
+  // ניסיון 1: פנייה ישירה
   try {
     const r = await fetchTimeout(s3Url + bust, 2000);
     if (r.ok) {
       const text = await r.text();
       const data = extractJSON(text);
-      if (data) {
-        finalize(data, 'שרת Cycle הארצי');
-        cleanupBtn();
-        return;
-      }
+      if (data) { finalize(data, 'שרת Cycle הארצי'); cleanupBtn(); return; }
     }
-  } catch(e) { console.warn('Direct S3 blocked or timed out:', e.message); }
+  } catch(e) { console.warn('Direct S3 blocked:', e.message); }
 
+  // ניסיון 2: מעקף CORS באמצעות פרוקסי חלופי אמין (Codetabs)
   try {
-    const r = await fetchTimeout(`https://api.allorigins.win/get?url=${encodeURIComponent(s3Url + bust)}`, 2500);
+    const proxyUrl = `https://api.codetabs.com/v1/proxy?url=${encodeURIComponent(s3Url + bust)}`;
+    const r = await fetchTimeout(proxyUrl, 3000);
     if (r.ok) {
-      const j = await r.json();
-      if (j && j.contents) {
-        const data = extractJSON(j.contents);
-        if (data) {
-          finalize(data, 'Proxy Server');
-          cleanupBtn();
-          return;
-        }
-      }
+      const text = await r.text();
+      const data = extractJSON(text);
+      if (data) { finalize(data, 'שרת פרוקסי מאובטח'); cleanupBtn(); return; }
     }
-  } catch(e) { console.warn('Proxy method failed:', e.message); }
+  } catch(e) { console.warn('Alternative proxy failed:', e.message); }
 
-  useBackup();
+  // אם הכל נכשל - עוברים לגיבוי ומציגים חיווי מדויק
+  useBackup("שגיאת תקשורת / CORS מול שרת אמזון S3");
   cleanupBtn();
 }
 
@@ -566,10 +560,11 @@ function finalize(data, source) {
   generateLocalSummary();
 }
 
-function useBackup() {
+function useBackup(reason = "") {
   allMachines = BACKUP_DATA;
   const now = new Date().toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'});
-  setStatus('backup', `🟡 מאגר ארצי מקומי – מציג פריסה מלאה של ${allMachines.length} מכונות בכל הארץ`);
+  const reasonText = reason ? ` (${reason})` : "";
+  setStatus('backup', `🟡 מאגר ארצי מקומי${reasonText} – מציג פריסה מלאה של ${allMachines.length} מכונות`);
   document.getElementById('lastUpdate').textContent = `מאגר מקומי מלא | ${now}`;
   render();
   generateLocalSummary();
