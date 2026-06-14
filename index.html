@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מערכת מיקומי מכונות מיחזור - מועצה אזורית שדות נגב2</title>
+    <title>מערכת מיקומי מכונות מיחזור - מועצה אזורית שדות נגב</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -224,10 +224,9 @@
         refreshBtn.disabled = true;
         refreshBtn.innerText = "🔄 טוען...";
 
+        // שימוש בפרוקסי יציב, פתוח לחלוטין וללא שום הגבלות CORS
         const targetUrl = 'https://cycle-app-bucket.s3.amazonaws.com/cycledata.js';
-        
-        // תיקון ה-CORS והגרשיים הסינטקטיים באמצעות שרת פרוקסי מהיר ויציב של Cloudflare
-        const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}&_=${Date.now()}`;
+        const proxyUrl = `https://api.codetabs.com/v1/proxy?url=${encodeURIComponent(targetUrl)}&_=${Date.now()}`;
 
         try {
             const response = await fetch(proxyUrl);
@@ -235,8 +234,8 @@
             
             let rawText = await response.text();
             
-            // ניקוי עטיפת משתנה ה-JS כדי להפוך אותו ל-JSON טהור
-            rawText = rawText.replace(/const\s+cycleData\s*=/, '').trim();
+            // ניקוי יסודי של עטיפת המשתנה מהקובץ המקורי של Cycle כדי להפוך אותו ל-JSON תקין
+            rawText = rawText.replace(/^\s*const\s+cycleData\s*=/, '').trim();
             if (rawText.endsWith(';')) {
                 rawText = rawText.slice(0, -1).trim();
             }
@@ -255,10 +254,10 @@
                 return;
             }
         } catch (error) {
-            console.error("טעינה חיווה נכשלה:", error);
+            console.error("טעינה חיה נכשלה, עובר למצב מקומי:", error);
         }
 
-        // גיבוי מקומי במידה והשרת לא זמין
+        // הפעלה במצב אופליין/גיבוי אם כל השאר נכשל
         currentMachinesList = backupData;
         statusDiv.innerText = "🟡 מצב מקומי (אופליין): מציג נתונים שמורים מראש (לא נרשם חיבור לשרת)";
         statusDiv.className = "status-bar status-backup";
@@ -336,7 +335,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         fetchLiveData();
-        // רענון אוטומטי ברקע כל שעה עגולה (3,600,000 מילישניות)
+        // רענון אוטומטי מלא כל שעה עגולה ברקע
         setInterval(fetchLiveData, 3600000);
     });
 </script>
