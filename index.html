@@ -371,7 +371,7 @@
   </table>
   <div class="empty-state" id="emptyState" style="display:none">
     <div class="icon">🔍</div>
-    <p>לא נמצאו מכונות באזור או בסינון שנבחרו</p>
+    <p>לאמצאו מכונות באזור או בסינון שנבחרו</p>
   </div>
 </div>
 
@@ -380,7 +380,7 @@
 // מאגר נתונים ארצי מורחב ומעודכן (87 מכונות)
 // ─────────────────────────────────────────────────────────────────
 const BACKUP_DATA = [
-  // ── מועצה אזורית שדות נגב והסביבה (מעודכן ומדויק) ──
+  // ── מועצה אזורית שדות נגב והסביבה ──
   { name:"כפר מימון", address:"מרכז מסחרי, כפר מימון", lat:31.4314, lng:34.5371, type:"KASHCASE", status:"ריקה", network:"מועצה אזורית שדות נגב" },
   { name:"סעד", address:"מזכירות, קיבוץ סעד", lat:31.4702, lng:34.5293, type:"KASHCASE", status:"ריקה", network:"מועצה אזורית שדות נגב" },
   { name:"תקומה", address:"מרכז הישוב, מושב תקומה", lat:31.3915, lng:34.5501, type:"פיתקית", status:"מלאה", network:"מועצה אזורית שדות נגב" },
@@ -420,4 +420,283 @@ const BACKUP_DATA = [
   { name:"רחובות – קניון רחובות", address:"רחוב יעקב, רחובות", lat:31.8964, lng:34.8112, type:"פיתקית", status:"ריקה", network:"מליסרון" },
   { name:"רחובות – אמריקן סיטי", address:"דרך הים, רחובות", lat:31.8910, lng:34.7892, type:"KASHCASE", status:"מלאה", network:"יוחננוף" },
   { name:"נס ציונה – קניותר", address:"רחוב ויצמן, נס ציונה", lat:31.9282, lng:34.7994, type:"פיתקית", status:"ריקה", network:"קניותר" },
-  { name:"רמלה – קניון עזריאלי", address:"שדרות הרצל, רמלה", lat:31.9302, lng:34.8745, type:"K
+  { name:"רמלה – קניון עזריאלי", address:"שדרות הרצל, רמלה", lat:31.9302, lng:34.8745, type:"KASHCASE", status:"ריקה", network:"עזריאלי" },
+  { name:"לוד – מרכז העיר", address:"שדרות דוד המלך, לוד", lat:31.9515, lng:34.8942, type:"פיתקית", status:"לא תקינה", network:"רמי לוי" },
+
+  // ── מחוז תל אביב והמרכז ──
+  { name:"תל אביב – עזריאלי", address:"דרך מנחם בגין 132, תל אביב", lat:32.0738, lng:34.7921, type:"KASHCASE", status:"ריקה", network:"עזריאלי" },
+  { name:"תל אביב – דיזנגוף סנטר", address:"רחוב דיזנגוף 50, תל אביב", lat:32.0779, lng:34.7744, type:"פיתקית 2", status:"ריקה", network:"סנטר" },
+  { name:"תל אביב – נמל תל אביב", address:"מבנה 3, נמל תל אביב", lat:32.0982, lng:34.7718, type:"פיתקית", status:"ריקה", network:"אתרים" },
+  { name:"תל אביב – רמת אביב", address:"רחוב איינשטיין, רמת אביב", lat:32.1124, lng:34.7925, type:"KASHCASE", status:"מלאה", network:"שופרסל" },
+  { name:"רמת גן – קניון איילון", address:"רחוב אבא הלל, רמת גן", lat:32.0998, lng:34.8214, type:"KASHCASE", status:"ריקה", network:"קניוני עזריאלי" },
+  { name:"גבעתיים – קניון גבעתיים", address:"רחוב דרך יצחק רבין, גבעתיים", lat:32.0656, lng:34.8105, type:"פיתקית", status:"ריקה", network:"גבעתיים" },
+  { name:"בני ברק – ויקטורי", address:"רחוב השלושה, בני ברק", lat:32.0912, lng:34.8320, type:"פיתקית 2", status:"ריקה", network:"ויקטורי" },
+  { name:"פתח תקווה – הקניון הגדול", address:"ז'בוטינסקי 72, פתח תקווה", lat:32.0915, lng:34.8648, type:"KASHCASE", status:"מלאה", network:"מליסרון" },
+  { name:"פתח תקווה – סירקין", address:"אלברט איינשטיין, פתח תקווה", lat:32.0890, lng:34.9090, type:"פיתקית", status:"ריקה", network:"קניון סירקין" },
+  { name:"ראשון לציון – קניון הזהב", address:"רחוב דוד סחרוב, ראשון לציון", lat:31.9864, lng:34.7725, type:"KASHCASE", status:"ריקה", network:"הזהב" },
+  { name:"ראשון לציון – סינמה סיטי", address:"משה דיין, ראשון לציון", lat:31.9840, lng:34.7550, type:"פיתקית 2", status:"ריקה", network:"חצי חינם" },
+  { name:"חולון – קניון חולון", address:"שדרות גולדה מאיר, חולון", lat:32.0135, lng:34.7742, type:"KASHCASE", status:"ריקה", network:"עזריאלי" },
+  { name:"בת ים – קניון בת ים", address:"רחוב יוספטל, בת ים", lat:32.0152, lng:34.7512, type:"פיתקית", status:"לא תקינה", network:"קניון בת ים" },
+
+  // ── מחוז השרון וצפון מרכז ──
+  { name:"נתניה – קניון עיר ימים", address:"רחוב בני ברק, נתניה", lat:32.2854, lng:34.8371, type:"KASHCASE", status:"ריקה", network:"שיכון ובינוי" },
+  { name:"נתניה – קניון השרון", address:"רחוב הרצל, נתניה", lat:32.3275, lng:34.8562, type:"פיתקית", status:"ריקה", network:"קניון השרון" },
+  { name:"הרצליה – שבעת הכוכבים", address:"שדרות שבעת הכוכבים, הרצליה", lat:32.1645, lng:34.8214, type:"KASHCASE", status:"מלאה", network:"שבעת הכוכבים" },
+  { name:"רעננה – רננים", address:"רחוב המלאכה, אזור תעשייה, רעננה", lat:32.1994, lng:34.8912, type:"פיתקית 2", status:"ריקה", network:"קניון רננים" },
+  { name:"כפר סבא – קניון G", address:"רחוב ויצמן, כפר סבא", lat:32.1764, lng:34.9295, type:"KASHCASE", status:"ריקה", network:"G סנטר" },
+  { name:"הוד השרון – קניון שרונים", address:"רחוב הרקון, הוד השרון", lat:32.1394, lng:34.8872, type:"פיתקית", status:"ריקה", network:"חצי חינם" },
+
+  // ── מחוז ירושלים ויהודה ──
+  { name:"ירושלים – קניון מלחה", address:"דרך אגודת ספורט בית\"ר, ירושלים", lat:31.7489, lng:35.1822, type:"פיתקית", status:"ריקה", network:"עזריאלי" },
+  { name:"ירושלים – רמות", address:"שופרסל רמות, ירושלים", lat:31.8179, lng:35.1791, type:"KASHCASE", status:"מלאה", network:"שופרסל" },
+  { name:"ירושלים – תלפיות", address:"רחוב האומן, ירושלים", lat:31.7490, lng:35.2150, type:"פיתקית 2", status:"ריקה", network:"רמי לוי" },
+  { name:"ירושלים – פסגת זאב", address:"שדרות משה דיין, ירושלים", lat:31.8290, lng:35.2440, type:"KASHCASE", status:"ריקה", network:"קניון הפסגה" },
+  { name:"מעלה אדומים – קניון אדומים", address:"דרך מדבר יהודה, מעלה אדומים", lat:31.7512, lng:35.2911, type:"פיתקית", status:"ריקה", network:"קניון אדומים" },
+  { name:"בית שמש – ביג סנטר", address:"שדרות יגאל אלון, בית שמש", lat:31.7482, lng:34.9890, type:"KASHCASE", status:"לא תקינה", network:"ביג" },
+
+  // ── מחוז חיפה והעמקים ──
+  { name:"חיפה – גרנד קניון", address:"דרך שמחה גולן, חיפה", lat:32.7892, lng:35.0094, type:"KASHCASE", status:"ריקה", network:"מליסרון" },
+  { name:"חיפה – חוצות המפרץ", address:"שדרות ההסתדרות, חיפה", lat:32.8012, lng:35.0514, type:"פיתקית", status:"ריקה", network:"חוצות המפרץ" },
+  { name:"חיפה – חורב סנטר", address:"רחוב חורב, חיפה", lat:32.7764, lng:34.9892, type:"פיתקית 2", status:"מלאה", network:"שופרסל" },
+  { name:"הקריות – קניון עזריאלי קרית אתא", address:"שדרות העצמאות, קרית אתא", lat:32.8092, lng:35.1051, type:"פיתקית 2", status:"לא תקינה", network:"עזריאלי" },
+  { name:"הקריות – קריון", address:"דרך עכו 192, קרית ביאליק", lat:32.8421, lng:35.0894, type:"KASHCASE", status:"ריקה", network:"מליסרון" },
+  { name:"נשר – רמי לוי", address:"דרך בר יהודה, נשר", lat:32.7915, lng:35.0410, type:"פיתקית", status:"ריקה", network:"רמי לוי" },
+  { name:"עפולה – עפולה מול", address:"רחוב הגליל, עפולה", lat:32.6078, lng:35.2891, type:"פיתקית 2", status:"לא תקינה", network:"עפולה מול" },
+  { name:"נצרת עילית – ביג פאשן", address:"שדרות ביג, נוף הגליל", lat:32.7049, lng:35.3215, type:"פיתקית", status:"ריקה", network:"ביג" },
+  { name:"בית שאן – צים סנטר", address:"שדרות מנחם בגין, בית שאן", lat:32.4962, lng:35.5021, type:"KASHCASE", status:"ריקה", network:"צים סנטר" },
+
+  // ── מחוז צפון וגליל ──
+  { name:"כרמיאל – קניון לב כרמיאל", address:"שדרות נשיאי ישראל, כרמיאל", lat:32.9124, lng:35.2915, type:"KASHCASE", status:"ריקה", network:"לב כרמיאל" },
+  { name:"כרמיאל – ביג כרמיאל", address:"רחוב המלאכה, כרמיאל", lat:32.9210, lng:35.3110, type:"פיתקית", status:"מלאה", network:"ביג" },
+  { name:"טבריה – קניון מול כנרת", address:"צומת צמח, טבריה", lat:32.7064, lng:35.5841, type:"פיתקית 2", status:"ריקה", network:"מול כנרת" },
+  { name:"טבריה – לב העיר", address:"שדרות הגיבורים, טבריה", lat:32.7956, lng:35.5312, type:"KASHCASE", status:"ריקה", network:"ויקטורי" },
+  { name:"עכו – קניון עזריאלי עכו", address:"רחוב שלום הגליל, עכו", lat:32.9264, lng:35.0841, type:"KASHCASE", status:"ריקה", network:"עזריאלי" },
+  { name:"נהריה – קניון ארנה", address:"שדרות בן צבי, נהריה", lat:32.9964, lng:35.0991, type:"פיתקית", status:"ריקה", network:"ארנה" },
+  { name:"ראש פינה – סנטר הגליל", address:"דרך חצור, ראש פינה", lat:32.9712, lng:35.5421, type:"פיתקית", status:"ריקה", network:"שופרסל" },
+  { name:"קרית שמונה – ביג נחמיה", address:"שדרות תל חי, קרית שמונה", lat:33.2084, lng:35.5714, type:"מלאה", network:"ביג" }
+];
+
+let allMachines = [];
+let displayMachines = [];
+
+// ── Fetch ──
+async function loadData() {
+  const btn = document.getElementById('refreshBtn');
+  const icon = document.getElementById('refreshIcon');
+
+  btn.disabled = true;
+  icon.textContent = '⏳';
+  icon.className = 'spin';
+  setStatus('loading', '⏳ מנסה למשוך נתוני לייב משרת CYCLE...');
+
+  const s3Url = 'https://cycle-app-bucket.s3.amazonaws.com/cycledata.js';
+  const bust = '?nc=' + Date.now();
+
+  try {
+    const r = await fetchTimeout(s3Url + bust, 2000);
+    if (r.ok) {
+      const text = await r.text();
+      const data = extractJSON(text);
+      if (data) {
+        finalize(data, 'שרת Cycle הארצי');
+        cleanupBtn();
+        return;
+      }
+    }
+  } catch(e) { console.warn('Direct S3 blocked or timed out:', e.message); }
+
+  try {
+    const r = await fetchTimeout(`https://api.allorigins.win/get?url=${encodeURIComponent(s3Url + bust)}`, 2500);
+    if (r.ok) {
+      const j = await r.json();
+      if (j && j.contents) {
+        const data = extractJSON(j.contents);
+        if (data) {
+          finalize(data, 'Proxy Server');
+          cleanupBtn();
+          return;
+        }
+      }
+    }
+  } catch(e) { console.warn('Proxy method failed:', e.message); }
+
+  // במקרה של חסימת רשת או CORS - עובר מיידית ומציג את הגיבוי בלי להתקוע
+  useBackup();
+  cleanupBtn();
+}
+
+function cleanupBtn() {
+  const btn = document.getElementById('refreshBtn');
+  const icon = document.getElementById('refreshIcon');
+  btn.disabled = false;
+  icon.textContent = '🔄';
+  icon.className = '';
+}
+
+function fetchTimeout(url, ms) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(t));
+}
+
+function extractJSON(text) {
+  try {
+    const s = text.indexOf('['), e = text.lastIndexOf(']');
+    if (s === -1 || e === -1) return null;
+    const arr = JSON.parse(text.substring(s, e + 1));
+    return Array.isArray(arr) && arr.length > 0 ? arr : null;
+  } catch { return null; }
+}
+
+function finalize(data, source) {
+  allMachines = normalizeData(data);
+  const now = new Date().toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'});
+  setStatus('live', `🟢 מחובר לענן – ${allMachines.length} מכונות ארציות סונכרנו בהצלחה (${now})`);
+  document.getElementById('lastUpdate').textContent = `עדכון: ${now} | מקור: ${source}`;
+  render();
+  generateLocalSummary();
+}
+
+function useBackup() {
+  allMachines = BACKUP_DATA;
+  const now = new Date().toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'});
+  setStatus('backup', `🟡 מאגר ארצי מקומי – מציג פריסה מלאה של ${allMachines.length} מכונות בכל הארץ`);
+  document.getElementById('lastUpdate').textContent = `מאגר מקומי מלא | ${now}`;
+  render();
+  generateLocalSummary();
+}
+
+function normalizeData(raw) {
+  return raw.map(m => {
+    const addr = m.address || m.Address || '';
+    const rawType = (m.type || m.Type || '').toUpperCase();
+    let type = 'פיתקית';
+    if (rawType.includes('KASHCASE') || rawType.includes('KASH')) type = 'KASHCASE';
+    else if (rawType.includes('PITKIT2') || rawType.includes('2')) type = 'פיתקית 2';
+
+    const rawStatus = (m.status || m.Status || m.state || '').toLowerCase();
+    let status = 'לא ידוע';
+    if (rawStatus.includes('empty') || rawStatus.includes('ריק')) status = 'ריקה';
+    else if (rawStatus.includes('full') || rawStatus.includes('מלא')) status = 'מלאה';
+    else if (rawStatus.includes('broken') || rawStatus.includes('error') || rawStatus.includes('לא תקין')) status = 'לא תקינה';
+
+    return {
+      name: m.name || m.location || addr.split(',')[0] || 'לא ידוע',
+      address: addr,
+      lat: parseFloat(m.lat || m.Lat || 0),
+      lng: parseFloat(m.lng || m.Lon || m.lng || 0),
+      type, status,
+      network: m.network || m.chain || ''
+    };
+  });
+}
+
+// ── Render ──
+function render() {
+  filterTable();
+  renderStats();
+}
+
+function filterTable() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const typeF = document.getElementById('typeFilter').value;
+  const statusF = document.getElementById('statusFilter').value;
+
+  displayMachines = allMachines.filter(m => {
+    const searchText = `${m.name} ${m.address} ${m.network}`.toLowerCase();
+    const matchSearch = !q || searchText.includes(q);
+    const matchType = typeF === 'all' || m.type === typeF;
+    const matchStatus = statusF === 'all' || m.status === statusF;
+    return matchSearch && matchType && matchStatus;
+  });
+
+  renderTable();
+}
+
+function renderTable() {
+  const tbody = document.getElementById('tableBody');
+  const empty = document.getElementById('emptyState');
+
+  if (displayMachines.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    document.getElementById('visibleCount').textContent = '0';
+    return;
+  }
+
+  empty.style.display = 'none';
+  document.getElementById('visibleCount').textContent = displayMachines.length;
+
+  tbody.innerHTML = displayMachines.map((m, i) => {
+    const typeBadge = m.type === 'KASHCASE'
+      ? '<span class="badge badge-kashcase">🔵 KASHCASE</span>'
+      : m.type === 'פיתקית 2'
+      ? '<span class="badge badge-pitkit2">🟣 פיתקית 2</span>'
+      : '<span class="badge badge-pitkit">🟢 פיתקית</span>';
+
+    const statusIcon = m.status === 'ריקה' ? '✅' : m.status === 'מלאה' ? '⚠️' : m.status === 'לא תקינה' ? '❌' : '❓';
+    const statusClass = m.status === 'ריקה' ? 'status-empty' : m.status === 'מלאה' ? 'status-full' : m.status === 'לא תקינה' ? 'status-broken' : 'status-unknown';
+
+    const wazeUrl = `https://waze.com/ul?ll=${m.lat},${m.lng}&navigate=yes`;
+
+    return `<tr>
+      <td style="color:var(--gray-500);font-size:12px;font-weight:600">${i+1}</td>
+      <td>
+        <div class="loc-name">${m.name}</div>
+        ${m.network ? `<div class="loc-addr">${m.network}</div>` : ''}
+      </td>
+      <td style="max-width:240px;font-size:13px">${m.address}</td>
+      <td>${typeBadge}</td>
+      <td><span class="status-badge ${statusClass}">${statusIcon} ${m.status}</span></td>
+      <td><a href="${wazeUrl}" target="_blank" class="waze-btn">🚗 Waze</a></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderStats() {
+  const total = allMachines.length;
+  const empty = allMachines.filter(m => m.status === 'ריקה').length;
+  const full  = allMachines.filter(m => m.status === 'מלאה').length;
+  const broken= allMachines.filter(m => m.status === 'לא תקינה').length;
+
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card"><div class="stat-label">סה"כ מכונות בארץ</div><div class="stat-value blue">${total}</div></div>
+    <div class="stat-card"><div class="stat-label">✅ פנויות וריקות</div><div class="stat-value green">${empty}</div></div>
+    <div class="stat-card"><div class="stat-label">⚠️ מלאות (איסוף נדרש)</div><div class="stat-value amber">${full}</div></div>
+    <div class="stat-card"><div class="stat-label">❌ מושבתות / תקלה</div><div class="stat-value red">${broken}</div></div>
+  `;
+}
+
+function generateLocalSummary() {
+  const panel = document.getElementById('aiPanel');
+  const text  = document.getElementById('aiText');
+  panel.classList.add('visible');
+
+  const total = allMachines.length;
+  const brokenCount = allMachines.filter(m => m.status === 'לא תקינה').length;
+  const fullCount = allMachines.filter(m => m.status === 'מלאה').length;
+
+  let summaryHTML = `<strong>📋 תמונת מצב פריסה ארצית:</strong> המערכת מציגה כעת <strong>${total} מכונות מיחזור</strong> בפריסה ארצית מלאה מהצפון ועד אילת. `;
+  
+  if (brokenCount > 0 || fullCount > 0) {
+    summaryHTML += `מתוכן, <strong>${fullCount} מכונות במצב מלא</strong> הממתינות לפינוי ואיסוף, ו-<strong>${brokenCount} מכונות מושבתות</strong> עם חיווי תקלה טכנית. `;
+  } else {
+    summaryHTML += `כל המכונות ברחבי הארץ מדווחות על סטטוס תקין וזמינות מלאה לציבור. `;
+  }
+
+  summaryHTML += `<br>💡 <strong>טיפ סינון:</strong> ניתן להשתמש בתיבת החיפוש כדי לסנן מיידית לפי אזור גיאוגרפי (לדוגמה: "שדות נגב", "באר שבע", "חיפה" או "תל אביב").`;
+
+  text.innerHTML = summaryHTML;
+}
+
+function setStatus(type, msg) {
+  const bar = document.getElementById('statusBar');
+  const txt = document.getElementById('statusText');
+  bar.className = `status-${type}`;
+  txt.textContent = msg;
+}
+
+document.addEventListener('DOMContentLoaded', loadData);
+</script>
+</body>
+</html>
