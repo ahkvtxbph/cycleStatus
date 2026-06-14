@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מערכת מיקומי מכונות מיחזור - מועצה אזורית שדות נגב</title>
+    <title>מערכת מיקומי מכונות מיחזור - מועצה אזורית שדות נגב2</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -215,7 +215,6 @@
 
     let currentMachinesList = [];
 
-    // פונקציית משיכה אסינכרונית יציבה ומהירה (משתמשת בפרוקסי קורס מהיר ומנקה את המבנה הלא-תקני)
     async function fetchLiveData() {
         const statusDiv = document.getElementById('connectionStatus');
         const refreshBtn = document.getElementById('refreshBtn');
@@ -227,16 +226,16 @@
 
         const targetUrl = 'https://cycle-app-bucket.s3.amazonaws.com/cycledata.js';
         
-        // שימוש בפרוקסי חלופי מהיר ויציב של קורססייב המבוסס על רשת קלאודפלייר הגלובלית
+        // תיקון ה-CORS והגרשיים הסינטקטיים באמצעות שרת פרוקסי מהיר ויציב של Cloudflare
         const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}&_=${Date.now()}`;
 
         try {
             const response = await fetch(proxyUrl);
-            if (!response.ok) throw new Error('שרת הנתונים לא הגיב');
+            if (!response.ok) throw new Error('Network error');
             
             let rawText = await response.text();
             
-            // ניקוי עטיפת הטקסט "const cycleData =" הקיים בקובץ המקור כדי להפוך אותו ל-JSON תקין
+            // ניקוי עטיפת משתנה ה-JS כדי להפוך אותו ל-JSON טהור
             rawText = rawText.replace(/const\s+cycleData\s*=/, '').trim();
             if (rawText.endsWith(';')) {
                 rawText = rawText.slice(0, -1).trim();
@@ -256,10 +255,10 @@
                 return;
             }
         } catch (error) {
-            console.error("שגיאה במשיכת הנתונים החיים:", error);
+            console.error("טעינה חיווה נכשלה:", error);
         }
 
-        // במקרה של תקלה ברשת, טוען את נתוני הגיבוי המקומיים מיידית
+        // גיבוי מקומי במידה והשרת לא זמין
         currentMachinesList = backupData;
         statusDiv.innerText = "🟡 מצב מקומי (אופליין): מציג נתונים שמורים מראש (לא נרשם חיבור לשרת)";
         statusDiv.className = "status-bar status-backup";
@@ -335,10 +334,9 @@
         document.getElementById('machineCounter').innerText = `נמצאו: ${visibleCount} מכונות תואמות לסינון`;
     }
 
-    // הפעלה ראשונית וטיימר שעה
     document.addEventListener('DOMContentLoaded', () => {
         fetchLiveData();
-        // טעינה אוטומטית מחדש בכל שעה (3,600,000 מילישניות)
+        // רענון אוטומטי ברקע כל שעה עגולה (3,600,000 מילישניות)
         setInterval(fetchLiveData, 3600000);
     });
 </script>
