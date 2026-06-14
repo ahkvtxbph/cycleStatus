@@ -198,6 +198,7 @@
 </div>
 
 <script>
+    // נתוני גיבוי מקומיים למקרה של תקלה ברשת
     const backupData = [
         { "address": "מועצה אזורית שדות נגב - כפר מימון (מרכז מסחרי)", "lat": 31.431401, "lng": 34.537118, "type": "KASHCASE" },
         { "address": "נתיבות - מתחם גלובוס סנטר, שדרות ירושלים", "lat": 31.4182, "lng": 34.5964, "type": "פיתקית" },
@@ -215,6 +216,7 @@
 
     let currentMachinesList = [];
 
+    // פונקציית משיכת נתונים שעוברת דרך השרת המאובטח של גוגל
     async function fetchLiveData() {
         const statusDiv = document.getElementById('connectionStatus');
         const refreshBtn = document.getElementById('refreshBtn');
@@ -225,18 +227,18 @@
         refreshBtn.innerText = "🔄 טוען...";
 
         const targetUrl = 'https://cycle-app-bucket.s3.amazonaws.com/cycledata.js';
-        // שימוש בפרוקסי אמין ומקצועי לעקיפת החסימה באמזון
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}&_=${Date.now()}`;
+        
+        // שימוש בפרוקסי הרשמי של גוגל לעקיפת CORS וחסימות אמזון לחלוטין
+        const googleProxy = `https://images-opensocial.googleusercontent.com/gadgets/proxy?container=fb&url=${encodeURIComponent(targetUrl)}&_=${Date.now()}`;
 
         try {
-            const response = await fetch(proxyUrl);
-            if (!response.ok) throw new Error('Proxy network error');
+            const response = await fetch(googleProxy);
+            if (!response.ok) throw new Error('Google Proxy error');
             
-            const jsonWrapper = await response.json();
-            let rawText = jsonWrapper.contents; // קבלת הטקסט הגולמי של הקובץ מהפרוקסי
+            let rawText = await response.text();
             
             if (rawText) {
-                // ניקוי עטיפת המשתנה "const cycleData =" והפיכת המחרוזת ל-JSON טהור
+                // ניקוי עטיפת המשתנה מהקובץ המקורי ("const cycleData =") והפיכה ל-JSON
                 rawText = rawText.replace(/^\s*const\s+cycleData\s*=/, '').trim();
                 if (rawText.endsWith(';')) {
                     rawText = rawText.slice(0, -1).trim();
@@ -257,10 +259,10 @@
                 }
             }
         } catch (error) {
-            console.error("טעינת הנתונים החיים נכשלה, עובר למצב מקומי:", error);
+            console.error("טעינת הנתונים נכשלה, עובר למצב מקומי:", error);
         }
 
-        // במקרה של כישלון (למשל בעיית רשת זמנית), הפעלת נתוני הגיבוי המקומיים
+        // שימוש בנתוני הגיבוי במידה וה-Fetch נכשל
         currentMachinesList = backupData;
         statusDiv.innerText = "🟡 מצב מקומי (אופליין): מציג נתונים שמורים מראש (לא נרשם חיבור לשרת)";
         statusDiv.className = "status-bar status-backup";
@@ -270,6 +272,7 @@
         refreshBtn.innerText = "🔄 רענן נתונים";
     }
 
+    // בניית שורות הטבלה דינמית
     function renderTable() {
         const tbody = document.getElementById('tableBody');
         let htmlRows = '';
@@ -313,6 +316,7 @@
         filterTable();
     }
 
+    // פונקציית סינון וחיפוש בתוך הטבלה
     function filterTable() {
         const filterText = document.getElementById('searchInput').value.toLowerCase().trim();
         const filterType = document.getElementById('typeFilter').value;
@@ -336,9 +340,10 @@
         document.getElementById('machineCounter').innerText = `נמצאו: ${visibleCount} מכונות תואמות לסינון`;
     }
 
+    // הפעלה אוטומטית ברגע שהדף נטען
     document.addEventListener('DOMContentLoaded', () => {
         fetchLiveData();
-        // רענון אוטומטי מלא ברקע כל שעה עגולה (3600000 מילישניות)
+        // רענון ברקע כל שעה עגולה (3600000 מילישניות)
         setInterval(fetchLiveData, 3600000);
     });
 </script>
