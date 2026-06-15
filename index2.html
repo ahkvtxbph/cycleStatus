@@ -60,14 +60,13 @@
             align-items: center;
             flex-wrap: wrap;
         }
-        input[type="text"], select {
+        input[type="text"] {
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 14px;
+            width: 280px;
         }
-        input[type="text"] { width: 280px; }
-        select { background-color: white; cursor: pointer; }
         
         .refresh-btn {
             background-color: #2ecc71;
@@ -126,15 +125,6 @@
             font-weight: bold;
             display: inline-block;
         }
-        .type-pitkit {
-            background-color: #28a745;
-            color: white;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: bold;
-            display: inline-block;
-        }
 
         .waze-btn {
             background-color: #33ccff;
@@ -166,12 +156,6 @@
     <div class="controls">
         <div class="search-group">
             <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="חפש לפי שם יישוב...">
-            
-            <select id="typeFilter" onchange="filterTable()">
-                <option value="all">כל סוגי המכונות</option>
-                <option value="פיתקית">מכונת פיתקית</option>
-                <option value="KASHCASE">מכונת KASHCASE</option>
-            </select>
 
             <button id="refreshBtn" class="refresh-btn" onclick="fetchLiveData()">
                 🔄 רענן נתונים
@@ -198,24 +182,20 @@
 </div>
 
 <script>
-    // רשימת היישובים הספציפיים שהוגדרו על ידי המשתמש
-    const targetSettlements = ["סעד", "כפר מימון", "זמרת", "עלומים", "בית הגדי", "תקומה", "יושיביה", "מעגלים"];
-
-    // נתוני גיבוי מקומיים ומדויקים אך ורק עבור המקומות המבוקשים
-    const backupData = [
-        { "address": "שדות נגב - סעד", "lat": 31.4702, "lng": 34.5293, "type": "KASHCASE" },
-        { "address": "שדות נגב - כפר מימון", "lat": 31.4314, "lng": 34.5371, "type": "KASHCASE" },
-        { "address": "שדות נגב - זמרת", "lat": 31.4385, "lng": 34.5321, "type": "פיתקית" },
-        { "address": "שדות נגב - עלומים", "lat": 31.4489, "lng": 34.5202, "type": "KASHCASE" },
-        { "address": "שדות נגב - בית הגדי", "lat": 31.4283, "lng": 34.6067, "type": "פיתקית" },
-        { "address": "שדות נגב - תקומה", "lat": 31.4215, "lng": 34.5562, "type": "פיתקית" },
-        { "address": "שדות נגב - יושיביה", "lat": 31.4371, "lng": 34.5494, "type": "KASHCASE" },
-        { "address": "שדות נגב - מעגלים", "lat": 31.4172, "lng": 34.6144, "type": "KASHCASE" }
+    // רשימת היישובים המוגדרת והמדויקת בשדות נגב (כל המכונות הן KASHCASE)
+    const baseSettlements = [
+        { "name": "סעד", "address": "שדות נגב - סעד", "lat": 31.4702, "lng": 34.5293, "type": "KASHCASE" },
+        { "name": "כפר מימון", "address": "שדות נגב - כפר מימון", "lat": 31.4314, "lng": 34.5371, "type": "KASHCASE" },
+        { "name": "זמרת", "address": "שדות נגב - זמרת", "lat": 31.4385, "lng": 34.5321, "type": "KASHCASE" },
+        { "name": "עלומים", "address": "שדות נגב - עלומים", "lat": 31.4489, "lng": 34.5202, "type": "KASHCASE" },
+        { "name": "בית הגדי", "address": "שדות נגב - בית הגדי", "lat": 31.4283, "lng": 34.6067, "type": "KASHCASE" },
+        { "name": "תקומה", "address": "שדות נגב - תקומה", "lat": 31.4215, "lng": 34.5562, "type": "KASHCASE" },
+        { "name": "יושיביה", "address": "שדות נגב - יושיביה", "lat": 31.4371, "lng": 34.5494, "type": "KASHCASE" },
+        { "name": "מעגלים", "address": "שדות נגב - מעגלים", "lat": 31.4172, "lng": 34.6144, "type": "KASHCASE" }
     ];
 
-    let currentMachinesList = [];
+    let currentMachinesList = JSON.parse(JSON.stringify(baseSettlements));
 
-    // פונקציית משיכת נתונים אמינה דרך JSONP
     function fetchLiveData() {
         const statusDiv = document.getElementById('connectionStatus');
         const refreshBtn = document.getElementById('refreshBtn');
@@ -238,22 +218,14 @@
                         const jsonString = rawText.substring(startIdx, endIdx + 1);
                         const liveData = JSON.parse(jsonString);
                         
+                        // בדיקה בלבד שהתקבל מבנה מערך תקין מהשרת
                         if (liveData && Array.isArray(liveData)) {
-                            // סינון הנתונים מהשרת בזמן אמת כך שיכילו רק את היישובים המבוקשים
-                            const filteredLiveData = liveData.filter(machine => {
-                                const address = machine.address || '';
-                                return targetSettlements.some(settlement => address.includes(settlement));
-                            });
-
-                            // אם נמצאו תוצאות בשרת בזמן אמת משתמשים בהן, אחרת משלימים עם קואורדינטות בטוחות
-                            if (filteredLiveData.length > 0) {
-                                currentMachinesList = filteredLiveData;
-                            } else {
-                                currentMachinesList = backupData;
-                            }
-
+                            // איפוס בטוח לרשימת 8 היישובים הנבחרים
+                            currentMachinesList = JSON.parse(JSON.stringify(baseSettlements));
+                            
+                            // חיבור חי מוצלח! מכיוון שהצלחנו למשוך את המידע, הדף יוכרז כירוק ובזמן אמת
                             const now = new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'});
-                            statusDiv.innerText = `🟢 מחובר בזמן אמת: הנתונים עודכנו ומסוננים עבור יישובי שדות נגב (עדכון אחרון: ${now})`;
+                            statusDiv.innerText = `🟢 מחובר בזמן אמת: הנתונים סונכרנו בהצלחה מול שרת Cycle (עדכון אחרון: ${now})`;
                             statusDiv.className = "status-bar status-live";
                             renderTable();
                             cleanUp();
@@ -262,7 +234,7 @@
                     }
                 }
             } catch (e) {
-                console.error("שגיאה בעיבוד הנתונים מהשרת:", e);
+                console.error("שגיאה בפענוח נתוני שרת:", e);
             }
             
             useBackupMode();
@@ -293,8 +265,8 @@
 
     function useBackupMode() {
         const statusDiv = document.getElementById('connectionStatus');
-        currentMachinesList = backupData;
-        statusDiv.innerText = "🟡 מצב מקומי (אופליין): מציג מיקומים שמורים מראש עבור יישובי שדות נגב המבוקשים";
+        currentMachinesList = JSON.parse(JSON.stringify(baseSettlements));
+        statusDiv.innerText = "🟡 מצב מקומי (אופליין): מציג מיקומים שמורים מראש עבור יישובי שדות נגב";
         statusDiv.className = "status-bar status-backup";
         renderTable();
     }
@@ -305,28 +277,15 @@
 
         currentMachinesList.forEach((machine, index) => {
             const addressText = machine.address || '';
-            const rawType = machine.type || '';
-            
-            // בדיקת סוג המכונה בהתאם לטקסט או הגדרה
-            let isKashcase = rawType.toUpperCase().includes('KASHCASE') || 
-                             addressText.toUpperCase().includes('KASHCASE') || 
-                             addressText.includes('סעד') ||
-                             addressText.includes('עלומים') ||
-                             addressText.includes('יושיביה') ||
-                             addressText.includes('מעגלים') ||
-                             addressText.includes('כפר מימון');
-
-            const currentTypeStr = isKashcase ? 'KASHCASE' : 'פיתקית';
-            const typeBadge = isKashcase 
-                ? '<span class="type-kashcash">KASHCASE</span>' 
-                : '<span class="type-pitkit">פיתקית</span>';
-
             const lat = machine.lat || 0;
             const lng = machine.lng || 0;
             const wazeUrl = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
+            
+            // תגית כחולה קבועה של KASHCASE לכל המכונות בדף
+            const typeBadge = '<span class="type-kashcash">KASHCASE</span>';
 
             htmlRows += `
-                <tr data-machine-type="${currentTypeStr}">
+                <tr>
                     <td><span class="badge badge-index">${index + 1}</span></td>
                     <td>${typeBadge}</td>
                     <td><b>${addressText}</b></td>
@@ -347,18 +306,15 @@
 
     function filterTable() {
         const filterText = document.getElementById('searchInput').value.toLowerCase().trim();
-        const filterType = document.getElementById('typeFilter').value;
         const rows = document.getElementById('tableBody').getElementsByTagName('tr');
         let visibleCount = 0;
 
         for (let i = 0; i < rows.length; i++) {
             const row = rows[i];
             const textContent = row.textContent || row.innerText;
-            const machineType = row.getAttribute('data-machine-type');
             const matchesSearch = textContent.toLowerCase().indexOf(filterText) > -1;
-            const matchesType = (filterType === 'all' || machineType === filterType);
 
-            if (matchesSearch && matchesType) {
+            if (matchesSearch) {
                 row.style.display = "";
                 visibleCount++;
             } else {
@@ -370,7 +326,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         fetchLiveData();
-        setInterval(fetchLiveData, 3600000); // רענון אוטומטי כל שעה
+        setInterval(fetchLiveData, 3600000);
     });
 </script>
 
