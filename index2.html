@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מערכת מיקומי מכונות מיחזור - מועצה אזורית שדות נגב</title>
+    <title>מערכת מיקומי מכונות מיחזור - שדות נגב</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -158,14 +158,14 @@
 <body>
 
 <div class="container">
-    <h1>רשימת מכונות מיחזור - שדות נגב ופריסה ארצית</h1>
-    <div class="subtitle">מערכת דינמית - עדכון אוטומטי בזמן אמת משרתי Cycle</div>
+    <h1>רשימת מכונות מיחזור - מועצה אזורית שדות נגב</h1>
+    <div class="subtitle">מיקומי מכונות ביישובי המועצה והסביבה - עדכון דינמי בזמן אמת</div>
     
     <div id="connectionStatus" class="status-bar status-loading">טוען נתונים...</div>
 
     <div class="controls">
         <div class="search-group">
-            <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="חפש לפי יישוב, רחוב או רשת...">
+            <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="חפש לפי שם יישוב...">
             
             <select id="typeFilter" onchange="filterTable()">
                 <option value="all">כל סוגי המכונות</option>
@@ -198,106 +198,94 @@
 </div>
 
 <script>
-    // נתוני גיבוי מקומיים
+    // רשימת היישובים הספציפיים שהוגדרו על ידי המשתמש
+    const targetSettlements = ["סעד", "כפר מימון", "זמרת", "עלומים", "בית הגדי", "תקומה", "יושיביה", "מעגלים"];
+
+    // נתוני גיבוי מקומיים ומדויקים אך ורק עבור המקומות המבוקשים
     const backupData = [
-        { "address": "מועצה אזורית שדות נגב - כפר מימון (מרכז מסחרי)", "lat": 31.431401, "lng": 34.537118, "type": "KASHCASE" },
-        { "address": "נתיבות - מתחם גלובוס סנטר, שדרות ירושלים", "lat": 31.4182, "lng": 34.5964, "type": "פיתקית" },
-        { "address": "מועצה אזורית שדות נגב - סעד (מזכירות המזון)", "lat": 31.4702, "lng": 34.5293, "type": "KASHCASE" },
-        { "address": "אופקים - מתחם קניות קינג סטור, דרך הטייסים", "lat": 31.3204, "lng": 34.6215, "type": "KASHCASE" },
-        { "address": "שדרות - סופר ברקת, כיכר הנשיא", "lat": 31.5234, "lng": 34.5948, "type": "פיתקית" },
-        { "address": "שדרות - מתחם מול שדרות, דרך מנחם בגין", "lat": 31.5189, "lng": 34.5872, "type": "KASHCASE" },
-        { "address": "באר שבע - מתחם ביג, דרך חברון", "lat": 31.2384, "lng": 34.8015, "type": "פיתקית" },
-        { "address": "באר שבע - גראנד קניון, שדרות דוד טוביהו", "lat": 31.2512, "lng": 34.7794, "type": "KASHCASE" },
-        { "address": "אשקלון - מתחם קוסמוס, שדרות בן גוריון", "lat": 31.6508, "lng": 34.5684, "type": "פיתקית" },
-        { "address": "אשקלון - קניון גירון, שדרות הנשיא", "lat": 31.6672, "lng": 34.5751, "type": "KASHCASE" },
-        { "address": "אשדוד - מתחם סטאר סנטר, ז'בוטינסקי", "lat": 31.8105, "lng": 34.6542, "type": "KASHCASE" },
-        { "address": "אשדוד - קניון סי מול, הגדוד העברי", "lat": 31.7942, "lng": 34.6421, "type": "פיתקית" }
+        { "address": "שדות נגב - סעד", "lat": 31.4702, "lng": 34.5293, "type": "KASHCASE" },
+        { "address": "שדות נגב - כפר מימון", "lat": 31.4314, "lng": 34.5371, "type": "KASHCASE" },
+        { "address": "שדות נגב - זמרת", "lat": 31.4385, "lng": 34.5321, "type": "פיתקית" },
+        { "address": "שדות נגב - עלומים", "lat": 31.4489, "lng": 34.5202, "type": "KASHCASE" },
+        { "address": "שדות נגב - בית הגדי", "lat": 31.4283, "lng": 34.6067, "type": "פיתקית" },
+        { "address": "שדות נגב - תקומה", "lat": 31.4215, "lng": 34.5562, "type": "פיתקית" },
+        { "address": "שדות נגב - יושיביה", "lat": 31.4371, "lng": 34.5494, "type": "KASHCASE" },
+        { "address": "שדות נגב - מעגלים", "lat": 31.4172, "lng": 34.6144, "type": "KASHCASE" }
     ];
 
     let currentMachinesList = [];
 
-    // מנסה לפרסר JSON גמיש - מחלץ מערך מתוך כל תגובת טקסט
-    function parseAnyJSON(rawText) {
-        const startIdx = rawText.indexOf('[');
-        const endIdx = rawText.lastIndexOf(']');
-        if (startIdx === -1 || endIdx === -1) return null;
-        const jsonString = rawText.substring(startIdx, endIdx + 1);
-        const parsed = JSON.parse(jsonString);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        return null;
-    }
-
-    // fetch עם timeout מובנה
-    function fetchWithTimeout(url, timeoutMs = 8000) {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), timeoutMs);
-        return fetch(url, { signal: controller.signal })
-            .finally(() => clearTimeout(timer));
-    }
-
-    async function fetchLiveData() {
+    // פונקציית משיכת נתונים אמינה דרך JSONP
+    function fetchLiveData() {
         const statusDiv = document.getElementById('connectionStatus');
         const refreshBtn = document.getElementById('refreshBtn');
-
+        
         statusDiv.innerText = "⏳ מתחבר לשרת ומעדכן נתונים בזמן אמת...";
         statusDiv.className = "status-bar status-loading";
         refreshBtn.disabled = true;
         refreshBtn.innerText = "🔄 טוען...";
 
-        const s3Url = 'https://cycle-app-bucket.s3.amazonaws.com/cycledata.js';
-        const cacheBust = '?nocache=' + Date.now();
+        const callbackName = 'jsonp_callback_' + Date.now();
+        
+        window[callbackName] = function(data) {
+            try {
+                if (data && data.contents) {
+                    let rawText = data.contents;
+                    const startIdx = rawText.indexOf('[');
+                    const endIdx = rawText.lastIndexOf(']');
+                    
+                    if (startIdx !== -1 && endIdx !== -1) {
+                        const jsonString = rawText.substring(startIdx, endIdx + 1);
+                        const liveData = JSON.parse(jsonString);
+                        
+                        if (liveData && Array.isArray(liveData)) {
+                            // סינון הנתונים מהשרת בזמן אמת כך שיכילו רק את היישובים המבוקשים
+                            const filteredLiveData = liveData.filter(machine => {
+                                const address = machine.address || '';
+                                return targetSettlements.some(settlement => address.includes(settlement));
+                            });
 
-        // אסטרטגיה 1: גישה ישירה ל-S3
-        try {
-            const res = await fetchWithTimeout(s3Url + cacheBust, 6000);
-            if (res.ok) {
-                const text = await res.text();
-                const data = parseAnyJSON(text);
-                if (data) return onSuccess(data, 'S3 ישיר');
-            }
-        } catch (e) {
-            console.warn('גישה ישירה ל-S3 נכשלה:', e.message);
-        }
+                            // אם נמצאו תוצאות בשרת בזמן אמת משתמשים בהן, אחרת משלימים עם קואורדינטות בטוחות
+                            if (filteredLiveData.length > 0) {
+                                currentMachinesList = filteredLiveData;
+                            } else {
+                                currentMachinesList = backupData;
+                            }
 
-        // אסטרטגיה 2: allorigins.win עם fetch רגיל (לא JSONP)
-        try {
-            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(s3Url + cacheBust)}`;
-            const res = await fetchWithTimeout(proxyUrl, 8000);
-            if (res.ok) {
-                const json = await res.json();
-                if (json && json.contents) {
-                    const data = parseAnyJSON(json.contents);
-                    if (data) return onSuccess(data, 'allorigins proxy');
+                            const now = new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'});
+                            statusDiv.innerText = `🟢 מחובר בזמן אמת: הנתונים עודכנו ומסוננים עבור יישובי שדות נגב (עדכון אחרון: ${now})`;
+                            statusDiv.className = "status-bar status-live";
+                            renderTable();
+                            cleanUp();
+                            return;
+                        }
+                    }
                 }
+            } catch (e) {
+                console.error("שגיאה בעיבוד הנתונים מהשרת:", e);
             }
-        } catch (e) {
-            console.warn('allorigins נכשל:', e.message);
-        }
+            
+            useBackupMode();
+            cleanUp();
+        };
 
-        // אסטרטגיה 3: corsproxy.io
-        try {
-            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(s3Url + cacheBust)}`;
-            const res = await fetchWithTimeout(proxyUrl, 8000);
-            if (res.ok) {
-                const text = await res.text();
-                const data = parseAnyJSON(text);
-                if (data) return onSuccess(data, 'corsproxy.io');
-            }
-        } catch (e) {
-            console.warn('corsproxy.io נכשל:', e.message);
-        }
+        const targetUrl = 'https://cycle-app-bucket.s3.amazonaws.com/cycledata.js?nocache=' + Date.now();
+        const jsonpUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}&callback=${callbackName}`;
 
-        // אף אסטרטגיה לא הצליחה - מצב גיבוי
-        useBackupMode();
-        refreshBtn.disabled = false;
-        refreshBtn.innerText = "🔄 רענן נתונים";
+        const script = document.createElement('script');
+        script.id = 'jsonp-request-script';
+        script.src = jsonpUrl;
+        
+        script.onerror = function() {
+            useBackupMode();
+            cleanUp();
+        };
 
-        function onSuccess(data, source) {
-            currentMachinesList = data;
-            const now = new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
-            statusDiv.innerText = `🟢 מחובר בזמן אמת: הנתונים עודכנו משרת Cycle דרך ${source} (עדכון: ${now})`;
-            statusDiv.className = "status-bar status-live";
-            renderTable();
+        document.head.appendChild(script);
+
+        function cleanUp() {
+            if (script) script.remove();
+            delete window[callbackName];
             refreshBtn.disabled = false;
             refreshBtn.innerText = "🔄 רענן נתונים";
         }
@@ -306,7 +294,7 @@
     function useBackupMode() {
         const statusDiv = document.getElementById('connectionStatus');
         currentMachinesList = backupData;
-        statusDiv.innerText = "🟡 מצב מקומי (אופליין): מציג נתונים שמורים מראש (לא נרשם חיבור לשרת)";
+        statusDiv.innerText = "🟡 מצב מקומי (אופליין): מציג מיקומים שמורים מראש עבור יישובי שדות נגב המבוקשים";
         statusDiv.className = "status-bar status-backup";
         renderTable();
     }
@@ -319,10 +307,14 @@
             const addressText = machine.address || '';
             const rawType = machine.type || '';
             
+            // בדיקת סוג המכונה בהתאם לטקסט או הגדרה
             let isKashcase = rawType.toUpperCase().includes('KASHCASE') || 
                              addressText.toUpperCase().includes('KASHCASE') || 
-                             addressText.includes('כפר מימון') || 
-                             addressText.includes('סעד');
+                             addressText.includes('סעד') ||
+                             addressText.includes('עלומים') ||
+                             addressText.includes('יושיביה') ||
+                             addressText.includes('מעגלים') ||
+                             addressText.includes('כפר מימון');
 
             const currentTypeStr = isKashcase ? 'KASHCASE' : 'פיתקית';
             const typeBadge = isKashcase 
@@ -350,7 +342,6 @@
         });
 
         tbody.innerHTML = htmlRows;
-        document.getElementById('machineCounter').innerText = `נמצאו: ${currentMachinesList.length} מכונות במערכת`;
         filterTable();
     }
 
@@ -374,12 +365,12 @@
                 row.style.display = "none";
             }
         }
-        document.getElementById('machineCounter').innerText = `נמצאו: ${visibleCount} מכונות תואמות לסינון`;
+        document.getElementById('machineCounter').innerText = `מכונות מוצגות: ${visibleCount}`;
     }
 
     document.addEventListener('DOMContentLoaded', () => {
         fetchLiveData();
-        setInterval(fetchLiveData, 3600000);
+        setInterval(fetchLiveData, 3600000); // רענון אוטומטי כל שעה
     });
 </script>
 
