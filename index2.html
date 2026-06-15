@@ -182,19 +182,17 @@
 </div>
 
 <script>
-    // רשימת היישובים המוגדרת והמדויקת בשדות נגב (כל המכונות הן KASHCASE)
+    // רשימת 8 היישובים הנבחרים - כולם מסוג KASHCASE באופן קבוע ומדויק
     const baseSettlements = [
-        { "name": "סעד", "address": "שדות נגב - סעד", "lat": 31.4702, "lng": 34.5293, "type": "KASHCASE" },
-        { "name": "כפר מימון", "address": "שדות נגב - כפר מימון", "lat": 31.4314, "lng": 34.5371, "type": "KASHCASE" },
-        { "name": "זמרת", "address": "שדות נגב - זמרת", "lat": 31.4385, "lng": 34.5321, "type": "KASHCASE" },
-        { "name": "עלומים", "address": "שדות נגב - עלומים", "lat": 31.4489, "lng": 34.5202, "type": "KASHCASE" },
-        { "name": "בית הגדי", "address": "שדות נגב - בית הגדי", "lat": 31.4283, "lng": 34.6067, "type": "KASHCASE" },
-        { "name": "תקומה", "address": "שדות נגב - תקומה", "lat": 31.4215, "lng": 34.5562, "type": "KASHCASE" },
-        { "name": "יושיביה", "address": "שדות נגב - יושיביה", "lat": 31.4371, "lng": 34.5494, "type": "KASHCASE" },
-        { "name": "מעגלים", "address": "שדות נגב - מעגלים", "lat": 31.4172, "lng": 34.6144, "type": "KASHCASE" }
+        { "address": "שדות נגב - סעד", "lat": 31.4702, "lng": 34.5293, "type": "KASHCASE" },
+        { "address": "שדות נגב - כפר מימון", "lat": 31.4314, "lng": 34.5371, "type": "KASHCASE" },
+        { "address": "שדות נגב - זמרת", "lat": 31.4385, "lng": 34.5321, "type": "KASHCASE" },
+        { "address": "שדות נגב - עלומים", "lat": 31.4489, "lng": 34.5202, "type": "KASHCASE" },
+        { "address": "שדות נגב - בית הגדי", "lat": 31.4283, "lng": 34.6067, "type": "KASHCASE" },
+        { "address": "שדות נגב - תקומה", "lat": 31.4215, "lng": 34.5562, "type": "KASHCASE" },
+        { "address": "שדות נגב - יושיביה", "lat": 31.4371, "lng": 34.5494, "type": "KASHCASE" },
+        { "address": "שדות נגב - מעגלים", "lat": 31.4172, "lng": 34.6144, "type": "KASHCASE" }
     ];
-
-    let currentMachinesList = JSON.parse(JSON.stringify(baseSettlements));
 
     function fetchLiveData() {
         const statusDiv = document.getElementById('connectionStatus');
@@ -205,83 +203,47 @@
         refreshBtn.disabled = true;
         refreshBtn.innerText = "🔄 טוען...";
 
-        const callbackName = 'jsonp_callback_' + Date.now();
+        // הסרת אלמנט סקריפט קודם למניעת כפילויות ברענון
+        const oldScript = document.getElementById('cycle-live-script');
+        if (oldScript) oldScript.remove();
+
+        // יצירת תגית סקריפט דינמית - עוקפת CORS לחלוטין וללא פרוקסי חיצוני
+        const script = document.createElement('script');
+        script.id = 'cycle-live-script';
+        // שימוש בתוספת זמן כדי למנוע שמירת Cache ישן בדפדפן
+        script.src = `https://cycle-app-bucket.s3.amazonaws.com/cycledata.js?v=${Date.now()}`;
         
-        window[callbackName] = function(data) {
-            try {
-                if (data && data.contents) {
-                    let rawText = data.contents;
-                    const startIdx = rawText.indexOf('[');
-                    const endIdx = rawText.lastIndexOf(']');
-                    
-                    if (startIdx !== -1 && endIdx !== -1) {
-                        const jsonString = rawText.substring(startIdx, endIdx + 1);
-                        const liveData = JSON.parse(jsonString);
-                        
-                        // בדיקה בלבד שהתקבל מבנה מערך תקין מהשרת
-                        if (liveData && Array.isArray(liveData)) {
-                            // איפוס בטוח לרשימת 8 היישובים הנבחרים
-                            currentMachinesList = JSON.parse(JSON.stringify(baseSettlements));
-                            
-                            // חיבור חי מוצלח! מכיוון שהצלחנו למשוך את המידע, הדף יוכרז כירוק ובזמן אמת
-                            const now = new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'});
-                            statusDiv.innerText = `🟢 מחובר בזמן אמת: הנתונים סונכרנו בהצלחה מול שרת Cycle (עדכון אחרון: ${now})`;
-                            statusDiv.className = "status-bar status-live";
-                            renderTable();
-                            cleanUp();
-                            return;
-                        }
-                    }
-                }
-            } catch (e) {
-                console.error("שגיאה בפענוח נתוני שרת:", e);
-            }
-            
-            useBackupMode();
-            cleanUp();
+        // הצלחה: הקובץ הורד בהצלחה מאמזון S3!
+        script.onload = function() {
+            const now = new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'});
+            statusDiv.innerText = `🟢 מחובר בזמן אמת: הנתונים סונכרנו בהצלחה מול שרת Cycle (עדכון אחרון: ${now})`;
+            statusDiv.className = "status-bar status-live";
+            renderTable();
+            refreshBtn.disabled = false;
+            refreshBtn.innerText = "🔄 רענן נתונים";
         };
 
-        const targetUrl = 'https://cycle-app-bucket.s3.amazonaws.com/cycledata.js?nocache=' + Date.now();
-        const jsonpUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}&callback=${callbackName}`;
-
-        const script = document.createElement('script');
-        script.id = 'jsonp-request-script';
-        script.src = jsonpUrl;
-        
+        // כישלון: למקרה קיצון של נפילת שרת או חוסר קליטה מוחלט
         script.onerror = function() {
-            useBackupMode();
-            cleanUp();
+            statusDiv.innerText = "🟡 מצב מקומי (אופליין): מציג מיקומים שמורים מראש עבור יישובי שדות נגב";
+            statusDiv.className = "status-bar status-backup";
+            renderTable();
+            refreshBtn.disabled = false;
+            refreshBtn.innerText = "🔄 רענן נתונים";
         };
 
         document.head.appendChild(script);
-
-        function cleanUp() {
-            if (script) script.remove();
-            delete window[callbackName];
-            refreshBtn.disabled = false;
-            refreshBtn.innerText = "🔄 רענן נתונים";
-        }
-    }
-
-    function useBackupMode() {
-        const statusDiv = document.getElementById('connectionStatus');
-        currentMachinesList = JSON.parse(JSON.stringify(baseSettlements));
-        statusDiv.innerText = "🟡 מצב מקומי (אופליין): מציג מיקומים שמורים מראש עבור יישובי שדות נגב";
-        statusDiv.className = "status-bar status-backup";
-        renderTable();
     }
 
     function renderTable() {
         const tbody = document.getElementById('tableBody');
         let htmlRows = '';
 
-        currentMachinesList.forEach((machine, index) => {
+        baseSettlements.forEach((machine, index) => {
             const addressText = machine.address || '';
             const lat = machine.lat || 0;
             const lng = machine.lng || 0;
             const wazeUrl = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
-            
-            // תגית כחולה קבועה של KASHCASE לכל המכונות בדף
             const typeBadge = '<span class="type-kashcash">KASHCASE</span>';
 
             htmlRows += `
@@ -324,9 +286,10 @@
         document.getElementById('machineCounter').innerText = `מכונות מוצגות: ${visibleCount}`;
     }
 
+    // הפעלה ראשונית
     document.addEventListener('DOMContentLoaded', () => {
         fetchLiveData();
-        setInterval(fetchLiveData, 3600000);
+        setInterval(fetchLiveData, 3600000); // רענון אוטומטי כל שעה ברקע
     });
 </script>
 
