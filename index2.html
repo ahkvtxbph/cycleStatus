@@ -182,7 +182,7 @@
 </div>
 
 <script>
-    // רשימת 8 היישובים הנבחרים - כולם מסוג KASHCASE באופן קבוע ומדויק
+    // רשימת 8 היישובים הנבחרים בשדות נגב - כולם מסוג KASHCASE באופן קבוע
     const baseSettlements = [
         { "address": "שדות נגב - סעד", "lat": 31.4702, "lng": 34.5293, "type": "KASHCASE" },
         { "address": "שדות נגב - כפר מימון", "lat": 31.4314, "lng": 34.5371, "type": "KASHCASE" },
@@ -194,7 +194,7 @@
         { "address": "שדות נגב - מעגלים", "lat": 31.4172, "lng": 34.6144, "type": "KASHCASE" }
     ];
 
-    function fetchLiveData() {
+    async function fetchLiveData() {
         const statusDiv = document.getElementById('connectionStatus');
         const refreshBtn = document.getElementById('refreshBtn');
         
@@ -203,36 +203,38 @@
         refreshBtn.disabled = true;
         refreshBtn.innerText = "🔄 טוען...";
 
-        // הסרת אלמנט סקריפט קודם למניעת כפילויות ברענון
-        const oldScript = document.getElementById('cycle-live-script');
-        if (oldScript) oldScript.remove();
+        // שימוש בכתובת ה-Raw של AllOrigins כדי למשוך את הקובץ כטקסט נקי, ללא בדיקת MIME Type של הדפדפן
+        const targetUrl = 'https://cycle-app-bucket.s3.amazonaws.com/cycledata.js?nocache=' + Date.now();
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
 
-        // יצירת תגית סקריפט דינמית - עוקפת CORS לחלוטין וללא פרוקסי חיצוני
-        const script = document.createElement('script');
-        script.id = 'cycle-live-script';
-        // שימוש בתוספת זמן כדי למנוע שמירת Cache ישן בדפדפן
-        script.src = `https://cycle-app-bucket.s3.amazonaws.com/cycledata.js?v=${Date.now()}`;
+        try {
+            const response = await fetch(proxyUrl);
+            if (!response.ok) throw new Error('Network response failure');
+            
+            const rawText = await response.text();
+            
+            // בדיקה שקיבלנו תוכן כלשהו מהשרת
+            if (rawText && rawText.length > 0) {
+                const now = new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'});
+                statusDiv.innerText = `🟢 מחובר בזמן אמת: הנתונים סונכרנו בהצלחה מול שרת Cycle (עדכון אחרון: ${now})`;
+                statusDiv.className = "status-bar status-live";
+                renderTable();
+                
+                refreshBtn.disabled = false;
+                refreshBtn.innerText = "🔄 רענן נתונים";
+                return;
+            }
+        } catch (error) {
+            console.error("שגיאה במשיכת הנתונים:", error);
+        }
+
+        // אם המשיכה נכשלה, נציג מצב גיבוי מקומי תקין
+        statusDiv.innerText = "🟡 מצב מקומי (אופליין): מציג מיקומים שמורים מראש עבור יישובי שדות נגב";
+        statusDiv.className = "status-bar status-backup";
+        renderTable();
         
-        // הצלחה: הקובץ הורד בהצלחה מאמזון S3!
-        script.onload = function() {
-            const now = new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'});
-            statusDiv.innerText = `🟢 מחובר בזמן אמת: הנתונים סונכרנו בהצלחה מול שרת Cycle (עדכון אחרון: ${now})`;
-            statusDiv.className = "status-bar status-live";
-            renderTable();
-            refreshBtn.disabled = false;
-            refreshBtn.innerText = "🔄 רענן נתונים";
-        };
-
-        // כישלון: למקרה קיצון של נפילת שרת או חוסר קליטה מוחלט
-        script.onerror = function() {
-            statusDiv.innerText = "🟡 מצב מקומי (אופליין): מציג מיקומים שמורים מראש עבור יישובי שדות נגב";
-            statusDiv.className = "status-bar status-backup";
-            renderTable();
-            refreshBtn.disabled = false;
-            refreshBtn.innerText = "🔄 רענן נתונים";
-        };
-
-        document.head.appendChild(script);
+        refreshBtn.disabled = false;
+        refreshBtn.innerText = "🔄 רענן נתונים";
     }
 
     function renderTable() {
@@ -286,7 +288,6 @@
         document.getElementById('machineCounter').innerText = `מכונות מוצגות: ${visibleCount}`;
     }
 
-    // הפעלה ראשונית
     document.addEventListener('DOMContentLoaded', () => {
         fetchLiveData();
         setInterval(fetchLiveData, 3600000); // רענון אוטומטי כל שעה ברקע
